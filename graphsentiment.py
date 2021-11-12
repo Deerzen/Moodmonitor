@@ -11,7 +11,7 @@ ax1 = fig.add_subplot(1,1,1)
 
 def animate(i):
     dict = {}
-    path = "Documents\Python\data\data.json"
+    path = "data.json"
     with open (path, "r") as jsonfile:
         dict = json.loads(jsonfile.read())
     x = []

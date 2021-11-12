@@ -49,7 +49,7 @@ current_time = "00:00:00"
 reports = {}
 
 # check if an oauth token and account name has been saved
-config_path = "Documents\Python\data\config.json"
+config_path = "config.json"
 if os.path.exists(config_path) == False:
     oauth = str(input("Enter a valid OAuth password (Can be generated at https://twitchapps.com/tmi/) "))
     user_name = str(input("Enter the user name of the associated Twitch account ")).lower()
@@ -208,7 +208,7 @@ def emotion_report():
 # safe the report to a JSON file
 def save_report(r_number, oc, emotion, mean, variance, time):
     reports[int(r_number)] = [oc, emotion, mean, variance, time]
-    path = "Documents\Python\data\data.json"
+    path = "data.json"
     with open(path, "w") as json_file:
         json.dump(reports, json_file)
 

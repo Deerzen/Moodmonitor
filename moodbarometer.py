@@ -104,6 +104,7 @@ except Exception as e:
     if ask_for_reset == y:
         os.remove(config_path)
 
+
 # analyzes sentiment of message with the Afinn Module
 # once the amount of messages reaches desired threshold, an average is calculated for the report
 # depending on the score a string is generated to make the sentiment easily readable

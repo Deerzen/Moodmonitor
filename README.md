@@ -35,7 +35,8 @@
  the generated reports in a JSON File. The second script graphsentiment.py tries
  to access the generated JSON file and uses the Matplotlib library to graph
  the recorded data points of the sentiment analysis live. Currently
- graphsentiment.py might crash when it tries to read the recorded data while moodbarometer.py is writing to the file.
+ graphsentiment.py might crash when it tries to read the recorded data while
+ moodbarometer.py is writing to the file.
 
 
  Cambira, Erik; Livingstone, Andrew; Hussain, Amir (2011): "The Hourglass of Emotions".

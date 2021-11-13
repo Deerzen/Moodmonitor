@@ -1,14 +1,19 @@
+# Imported modules
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib import style
 import json
 
+# Style for the graph
 style.use("fivethirtyeight")
 
+# Global variables
 report_max = int(input("How many reports shall be shown at max? "))
 fig = plt.figure()
 ax1 = fig.add_subplot(1,1,1)
 
+
+# Function which reads the generated data and creates a graph with Matplotlib.
 def animate(i):
     dict = {}
     path = "moodmonitor/data.json"
@@ -37,7 +42,6 @@ def animate(i):
     plt.ylabel('Value', fontsize=14)
     plt.legend()
 
-    plt.gcf().autofmt_xdate(rotation = 90)
-
+# Show and update the graph in the specified interval.
 ani = animation.FuncAnimation(fig, animate, interval=4000)
 plt.show()

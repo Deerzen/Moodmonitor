@@ -1,4 +1,4 @@
-# module import
+# Imported modules
 from afinn import Afinn
 import os
 import socket
@@ -6,33 +6,58 @@ import re
 import time
 import json
 
-# emoji data
-# the chosen emotes are based upon the ranking of the most used emotes by streamlabs:
-# tinyurl.com/datt2yau
-# the emotion categories are second level emotions of the "Hourglass of Emotions" model
-# for more acurate results this list should be validated through a survey
-Optimism = [ "LUL", ":)", "FeelsGoodMan", "LULW", "SeemsGood", "LuL", "catJam", "sumParrot", "B)", "CurseLit", "yyjSmile", "pepeD", "blobDance", "forsenPls", "TRUEING", "eeveeDance", "dnyPls", "BloodTrail", "BlessRNG", "EZ", "pepeJAM", "jahParrot", "widepeepoHappy", "VoteYea", "PauseChamp", "CoolCat", "TriKool", "pepeJAMJAM", "LOLW", "PEPEDS", "PepoDance"]
-Frustration = ["NotLikeThis", "DamnWart", "FailFish"]
+# Emote data
+# For more information on the method for the emote analysis see the readme file.
+Optimism =      ["LUL", ":)", "FeelsGoodMan", "LULW", "SeemsGood", "LuL", "catJam",
+                 "sumParrot", "B)", "CurseLit", "yyjSmile", "pepeD", "blobDance",
+                 "forsenPls", "TRUEING", "eeveeDance", "dnyPls", "BloodTrail",
+                 "BlessRNG", "EZ", "pepeJAM", "jahParrot", "widepeepoHappy", "VoteYea",
+                 "PauseChamp", "CoolCat", "TriKool", "pepeJAMJAM", "LOLW", "PEPEDS",
+                 "PepoDance"]
+Frustration =    ["NotLikeThis", "DamnWart", "FailFish"]
 Aggressiveness = ["SMOrc", "firneiSMOrc", "SwiftRage"]
-Anxiety = ["WutFace", "monkaS", "monkaW"]
-Frivolity = ["Kappa", "Kapp", "gaminaKappa", "KappaPride", "forseE", "TriHard", "WideHardo", "HeyGuys", "gachiBASS", "gachiHYPER", "gachiGASM", "FeelsOkayMan", "HandsUp", "FeelsButtsMan", "YEP", "WideHard", "DICKS", "Keepo", "GachiPls"]
-Disapproval = ["D:", "cmonBruh"]
+Anxiety =        ["WutFace", "monkaS", "monkaW"]
+Frivolity =      ["Kappa", "Kapp", "gaminaKappa", "KappaPride", "forseE", "TriHard",
+                  "WideHardo", "HeyGuys", "gachiBASS", "gachiHYPER", "gachiGASM",
+                  "FeelsOkayMan", "HandsUp", "FeelsButtsMan", "YEP", "WideHard",
+                  "DICKS", "Keepo", "GachiPls"]
+Disapproval =    ["D:", "cmonBruh"]
 # Rejection = no emotes
-Awe = ["PogChamp", "Pog", "PogU", "Clap", "5Head", "HYPERCLAP", "POGGERS", "PagChomp", "PagMan", "WAYTOODANK"]
-Love = ["<3", "Kreygasm", "xqcL", "papaL", "nebelHERZ", "bleedPurple", "FeelsBirthdayMan", "VirtualHug", "TwitchUnity"]
+Awe =            ["PogChamp", "Pog", "PogU", "Clap", "5Head", "HYPERCLAP", "POGGERS",
+                  "PagChomp", "PagMan", "WAYTOODANK"]
+Love =           ["<3", "Kreygasm", "xqcL", "papaL", "nebelHERZ", "bleedPurple",
+                  "FeelsBirthdayMan", "VirtualHug", "TwitchUnity"]
 # Envy = no emotes
-Rivalry = ["s3r4Bund", "AYAYA", "NaM", "kiandoAYAYA", "No1", "KKona", "ANELE", "MingLee", "AYAYABASS", "VoHiYo"]
+Rivalry =        ["s3r4Bund", "AYAYA", "NaM", "kiandoAYAYA", "No1", "KKona", "ANELE",
+                  "MingLee", "AYAYABASS", "VoHiYo"]
 # Submission = no emotes
-Gloat = ["OMEGALUL", "MEGALUL", "ZULUL", "KEKW", "chipsaKEK", "DuckerZ", "Jebaited", "EleGiggle", "PJSalt", "3Head", "OpieOP", "MrDestructoid", "peepoClap", "Pepega", "FeelsDankMan", "forsenCD", "PepeLaugh" , "pepeLaugh"]
-Remorse = ["BibleThump", "FeelsBadMan", "flushE", ":(", "PepeHands", "AngelThump", "Sadge", "FeelsStrongMan", "widepeepoSad"]
-Contempt = ["DansGame", "ResidentSleeper", "4Weirding", "haHAA", "sheydoN", "4Head", "BabyRage", "PogO", "WeirdChamp"]
+Gloat =          ["OMEGALUL", "MEGALUL", "ZULUL", "KEKW", "chipsaKEK", "DuckerZ",
+                  "Jebaited", "EleGiggle", "PJSalt", "3Head", "OpieOP", "MrDestructoid",
+                  "peepoClap", "Pepega", "FeelsDankMan", "forsenCD", "PepeLaugh",
+                  "pepeLaugh"]
+Remorse =        ["BibleThump", "FeelsBadMan", "flushE", ":(", "PepeHands", "AngelThump",
+                  "Sadge", "FeelsStrongMan", "widepeepoSad"]
+Contempt =       ["DansGame", "ResidentSleeper", "4Weirding", "haHAA", "sheydoN",
+                  "4Head", "BabyRage", "PogO", "WeirdChamp"]
 # Coercion = no emotes
 
-# emoji analysis global vars
-# emotion count records how often an emotion has been used since last report
-emotion_count = {"optimism": 0, "frustration": 0, "aggressiveness": 0, "anxiety": 0, "frivolity": 0, "disapproval": 0, "awe": 0, "love": 0, "rivalry": 0, "gloat": 0, "remorse": 0, "contempt": 0}
+# emotion_count records how often an emotion has been used since last report.
+emotion_count = {
+"optimism": 0,
+"frustration": 0,
+"aggressiveness": 0,
+"anxiety": 0,
+"frivolity": 0,
+"disapproval": 0,
+"awe": 0,
+"love": 0,
+"rivalry": 0,
+"gloat": 0,
+"remorse": 0,
+"contempt": 0
+}
 
-# sentiment analysis global vars
+# Sentiment analysis global variables
 afn = Afinn(language="en", emoticons=True)
 total_score = 0
 score_amount = 0
@@ -43,24 +68,26 @@ afinn_mean = 0
 squared_sum = 0
 sentiment = "neutral"
 
-# report global vars
+# Report global variables
 report_number = 0
 current_time = "00:00:00"
 reports = {}
 
-# check if an oauth token and account name has been saved
+# Checks if an oauth token and account name has been saved.
 folder_path = "moodmonitor"
 if not os.path.isdir(folder_path):
    os.makedirs(folder_path)
 config_path = "moodmonitor/config.json"
 if not os.path.exists(config_path):
-    oauth = str(input("Enter a valid OAuth password (Can be generated at https://twitchapps.com/tmi/) "))
+    oauth = str(input(
+    "Enter a valid OAuth password (Can be generated at https://twitchapps.com/tmi/) "))
     user_name = str(input("Enter the user name of the associated Twitch account ")).lower()
     config_data = [oauth, user_name]
     with open(config_path, "w") as config_file:
         json.dump(config_data, config_file)
 else:
-    ask_for_reset = str(input("Do you want to reset the saved OAuth password and username? (y/n) "))
+    ask_for_reset = str(input(
+    "Do you want to reset the saved OAuth password and username? (y/n) "))
     if ask_for_reset == "y":
         os.remove(config_path)
     elif ask_for_reset == "n":
@@ -69,22 +96,22 @@ else:
         print("Invalid input")
         quit()
 
-# data for server connection
+# Data for server connection.
 with open (config_path, "r") as config_file:
     config_data = json.loads(config_file.read())
-connection_data = ("irc.chat.twitch.tv", 6667) # must not be changed
-token = config_data[0] # token can be generated at twitchapps.com/tmi/
-user = config_data[1] # twitch user name in lower cases that is associated with the token
-channel = "#" + str(input("What channel do you want to monitor? ")).lower() # asking for the twitch channel the bot is supposed to join
+connection_data = ("irc.chat.twitch.tv", 6667) # Must not be changed.
+token = config_data[0] # Token can be generated at twitchapps.com/tmi/
+user = config_data[1] # Twitch user name in lower cases that is associated with the token
+channel = "#" + str(input("What channel do you want to monitor? ")).lower() # Targeted channel
 readbuffer = ""
 
-# vars for message handling
-# report_interval dictates the amount of messages that are needed for a report
+# Variables for message handling.
+# Report_interval dictates the amount of messages that are needed for a report.
 chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
 messages_since_report = 0
 report_interval = int(input("On a how many messages should a report be based? "))
 
-# tries to connect to the twitch IRC server with given information
+# Tries to connect to the twitch IRC server with given information.
 try:
     server = socket.socket()
     server.connect(connection_data)
@@ -96,18 +123,19 @@ try:
     print("")
     print("Connection to " + str(channel) + " appears to be successful")
     print("")
-# error message if unsuccessful
+# Error message if unsuccessful.
 except Exception as e:
     print(str(e))
     connected = False
-    ask_for_reset = str(input("Connection failed. Do you want to reset the saved OAuth password? (y/n) "))
+    ask_for_reset = str(input(
+    "Connection failed. Do you want to reset the saved OAuth password? (y/n) "))
     if ask_for_reset == y:
         os.remove(config_path)
 
 
-# analyzes sentiment of message with the Afinn Module
-# once the amount of messages reaches desired threshold, an average is calculated for the report
-# depending on the score a string is generated to make the sentiment easily readable
+# Analyzes sentiment of message with the Afinn Module. Once the amount
+# of messages reaches desired threshold, an average is calculated for the report.
+# Depending on the score a string is generated to make the sentiment easily readable
 def sentiment_analysis(message):
     global total_score
     global score_amount
@@ -133,7 +161,7 @@ def sentiment_analysis(message):
             sentiment = "negative"
 
 
-# analyzes what emotions chat is expressing through emotes in the message
+# Analyzes what emotions chat is expressing through emotes in the message.
 def emoji_analysis(message):
     dict = {0: [Optimism, "optimism"],
             1: [Frustration, "frustration"],
@@ -152,7 +180,7 @@ def emoji_analysis(message):
         check_for_emotion(dict[i][0], dict[i][1], message)
 
 
-# checks if message contains known emote and adds associated emotion to emotion_count
+# Checks if message contains known emote and adds associated emotion to emotion_count.
 def check_for_emotion(array, string_name, msg):
     global emotion_count
     for i in range(len(array)):
@@ -161,10 +189,10 @@ def check_for_emotion(array, string_name, msg):
             break
 
 
-# checks for every emotion that has been used at least once since last report
-# checks which emotion has been used the most
-# requests the saving of all reports and initiates the printing of the current report
-# resets emotions array / emotion count and pings the server
+# Checks for every emotion that has been used at least once since last report.
+# Afterwards it checks which emotion has been used the most and requests
+# the saving of all reports and initiates the printing of the current report.
+# Finally it resets emotions array / emotion count and pings the server.
 def emotion_report():
     global report_interval
     global emotion_count
@@ -201,15 +229,43 @@ def emotion_report():
             emotion_string = i + " (" + str(number_string) + "% of messages)"
             primary_emotion = emotion_count[i]
 
-    save_report(report_number, outcome, emotion_string, afinn_mean, afinn_variance, current_time)
-    print_report(report_number, current_time, sentiment, outcome, afinn_mean, afinn_variance, emotion_string)
+    save_report(
+    report_number,
+    outcome,
+    emotion_string,
+    afinn_mean,
+    afinn_variance,
+    current_time
+    )
+    print_report(
+    report_number,
+    current_time,
+    sentiment,
+    outcome,
+    afinn_mean,
+    afinn_variance,
+    emotion_string
+    )
 
     emotions = []
-    emotion_count = {"optimism": 0, "frustration": 0, "aggressiveness": 0, "anxiety": 0, "frivolity": 0, "disapproval": 0, "awe": 0, "love": 0, "rivalry": 0, "gloat": 0, "remorse": 0, "contempt": 0}
+    emotion_count = {
+    "optimism": 0,
+    "frustration": 0,
+    "aggressiveness": 0,
+    "anxiety": 0,
+    "frivolity": 0,
+    "disapproval": 0,
+    "awe": 0,
+    "love": 0,
+    "rivalry": 0,
+    "gloat": 0,
+    "remorse": 0,
+    "contempt": 0
+    }
     ping_server()
 
 
-# safe the report to a JSON file
+# Safes the report to a JSON file.
 def save_report(r_number, oc, emotion, mean, variance, time):
     reports[int(r_number)] = [oc, emotion, mean, variance, time]
     path = "moodmonitor/data.json"
@@ -217,21 +273,24 @@ def save_report(r_number, oc, emotion, mean, variance, time):
         json.dump(reports, json_file)
 
 
-# print the compiled report
+# Prints the compiled report.
 def print_report(r_number, time, sent, oc, mean, variance, emotion):
     print("Report Nr. " + str(r_number) + " (" + str(time) + ")" + ":")
-    print("Sentiment seems " + sent + " (Current Score: " + str(oc) + ", Mean: " + str(format(mean, '.2f')) + ", Variance: " + str(format(variance, '.2f')) + ")")
+    print("Sentiment seems " + sent + " (Current Score: " + str(oc) + \
+    ", Mean: " + str(format(mean, '.2f')) + ", Variance: " + \
+    str(format(variance, '.2f')) + ")")
     print("Chat primarily expresses " + emotion)
     print(" ")
 
 
-# pinging the server regularly is necessary to prevent forced disconnections
+# Pinging the server regularly is necessary to prevent forced disconnections.
 def ping_server():
     server.send(str.encode("PING tmi.twitch.tv\r\n", "utf-8"))
 
 
-# bot loop which receives all messages, decodes them and passes them to the analsis functions
-# once the amount of handled messages reaches the desired threshold the emotion_report() gets called
+# Bot loop which receives all messages, decodes them and passes them to
+# the analsis functions. Once the amount of handled messages reaches the desired
+# threshold the emotion_report() gets called.
 def bot_loop():
     global messages_since_report
     global report_interval
@@ -253,6 +312,6 @@ def bot_loop():
             emotion_report()
             messages_since_report = 0
 
-# main loop
+# Main loop
 if __name__ == "__main__":
     bot_loop()

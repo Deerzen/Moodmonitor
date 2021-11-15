@@ -18,8 +18,8 @@
  psychological model "The Hourglass of Emotions" (Cambria, Livingstone, Hussain 2011).
  More specifically the second-level emotions (ibid.: 153) have been used
  as categories. The most used emotes of Twitch and the popular browser extensions
- FZZ and BTTV (StreamElements 2021).
- have been assigned to the category that best matches its intended meaning.
+ FZZ and BTTV (StreamElements 2021) have been assigned to the category that
+ best matches their intended meaning respectively.
  The script counts how often emotes of a certain category have been used and
  reports what percentage of messages expressed the dominant emotion.
 

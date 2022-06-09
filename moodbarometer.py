@@ -1,6 +1,7 @@
 # Imported modules
 from afinn import Afinn
 import os
+import streamlit  as st
 import socket
 import re
 import time
@@ -79,22 +80,20 @@ if not os.path.isdir(folder_path):
    os.makedirs(folder_path)
 config_path = "moodmonitor/config.json"
 if not os.path.exists(config_path):
-    oauth = str(input(
-    "Enter a valid OAuth password (Can be generated at https://twitchapps.com/tmi/) "))
-    user_name = str(input("Enter the user name of the associated Twitch account ")).lower()
+    oauth = st.text_input(
+    "Enter a valid OAuth password (Can be generated at https://twitchapps.com/tmi/) ")
+    user_name = st.text_input("Enter the user name of the associated Twitch account ").lower()
     config_data = [oauth, user_name]
     with open(config_path, "w") as config_file:
         json.dump(config_data, config_file)
 else:
-    ask_for_reset = str(input(
-    "Do you want to reset the saved OAuth password and username? (y/n) "))
-    if ask_for_reset == "y":
+    selection = st.selectbox("Do you want to reset the saved OAuth password and username?",
+                ("", "Yes", "No"))
+    if selection == "Yes":
         os.remove(config_path)
-    elif ask_for_reset == "n":
+    elif selection == "No":
         pass
-    else:
-        print("Invalid input")
-        quit()
+
 
 # Data for server connection.
 with open (config_path, "r") as config_file:
@@ -102,35 +101,37 @@ with open (config_path, "r") as config_file:
 connection_data = ("irc.chat.twitch.tv", 6667) # Must not be changed.
 token = config_data[0] # Token can be generated at twitchapps.com/tmi/
 user = config_data[1] # Twitch user name in lower cases that is associated with the token
-channel = "#" + str(input("What channel do you want to monitor? ")).lower() # Targeted channel
+channel = "#" + st.text_input("What channel do you want to monitor? ").lower() # Targeted channel
 readbuffer = ""
 
 # Variables for message handling.
 # Report_interval dictates the amount of messages that are needed for a report.
 chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
 messages_since_report = 0
-report_interval = int(input("On a how many messages should a report be based? "))
+report_interval = st.number_input("On a how many messages should a report be based? ",  min_value=0)
+has_attempted_connection = st.button("Attempt connection")
 
-# Tries to connect to the twitch IRC server with given information.
-try:
-    server = socket.socket()
-    server.connect(connection_data)
-    server.send(bytes("PASS " + token + "\r\n", "utf-8"))
-    server.send(bytes("NICK " + user + "\r\n", "utf-8"))
-    server.send(bytes("JOIN " + channel + "\r\n", "utf-8"))
-    connected = True
-    print(server)
-    print("")
-    print("Connection to " + str(channel) + " appears to be successful")
-    print("")
-# Error message if unsuccessful.
-except Exception as e:
-    print(str(e))
-    connected = False
-    ask_for_reset = str(input(
-    "Connection failed. Do you want to reset the saved OAuth password? (y/n) "))
-    if ask_for_reset == y:
-        os.remove(config_path)
+@st.cache
+def attempt_connection():
+    try:
+        server = socket.socket()
+        server.connect(connection_data)
+        server.send(bytes("PASS " + token + "\r\n", "utf-8"))
+        server.send(bytes("NICK " + user + "\r\n", "utf-8"))
+        server.send(bytes("JOIN " + channel + "\r\n", "utf-8"))
+        connected = True
+        st.write(server)
+        st.write("Connection to " + str(channel) + " appears to be successful")
+
+    # Error message if unsuccessful.
+    except Exception as e:
+        print(str(e))
+        connected = False
+        ask_for_reset = str(input(
+        "Connection failed. Do you want to reset the saved OAuth password? (y/n) "))
+        if ask_for_reset == y:
+            os.remove(config_path)
+    return [server, connected]
 
 
 # Analyzes sentiment of message with the Afinn Module. Once the amount
@@ -275,12 +276,12 @@ def save_report(r_number, oc, emotion, mean, variance, time):
 
 # Prints the compiled report.
 def print_report(r_number, time, sent, oc, mean, variance, emotion):
-    print("Report Nr. " + str(r_number) + " (" + str(time) + ")" + ":")
-    print("Sentiment seems " + sent + " (Current Score: " + str(oc) + \
+    st.write("Report Nr. " + str(r_number) + " (" + str(time) + ")" + ":")
+    st.write("Sentiment seems " + sent + " (Current Score: " + str(oc) + \
     ", Mean: " + str(format(mean, '.2f')) + ", Variance: " + \
     str(format(variance, '.2f')) + ")")
-    print("Chat primarily expresses " + emotion)
-    print(" ")
+    st.write("Chat primarily expresses " + emotion)
+    st.write(" ")
 
 
 # Pinging the server regularly is necessary to prevent forced disconnections.
@@ -291,10 +292,8 @@ def ping_server():
 # Bot loop which receives all messages, decodes them and passes them to
 # the analsis functions. Once the amount of handled messages reaches the desired
 # threshold the emotion_report() gets called.
-def bot_loop():
+def bot_loop(server, connected):
     global messages_since_report
-    global report_interval
-
     while connected:
         response = server.recv(1024).decode("utf-8", "ignore")
         if "PING" in response:
@@ -306,12 +305,16 @@ def bot_loop():
             message = chat_msg.sub("", response)
             msg = message.split("\r\n")[0]
             msg = str(msg)
+            st.write(msg)
             sentiment_analysis(msg)
             emoji_analysis(msg)
         if messages_since_report >= report_interval:
             emotion_report()
             messages_since_report = 0
 
-# Main loop
-if __name__ == "__main__":
-    bot_loop()
+if has_attempted_connection:
+    # Main loop
+    if __name__ == "__main__":
+        connection_result = attempt_connection()
+        st.write(connection_result)
+        bot_loop(connection_result[0], connection_result[1])

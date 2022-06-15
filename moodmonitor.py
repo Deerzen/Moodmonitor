@@ -9,9 +9,14 @@ import time
 import json
 
 # Global variables
-report_interval = 10
-reports: dict = {}
-sentiment_records = {
+report_interval: int = 10
+sentiment_data: dict = {
+    "report number": [0],
+    "afinn mean": [0],
+    "afinn variance": [0],
+    "current avg": [0] 
+}
+sentiment_records: dict = {
     "total": 0.00,
     "scores": 0,
     "current avg": 0.00,
@@ -103,9 +108,22 @@ def calculate_report():
         ping_server()
 
 
+def calculate_chart():
+    global sentiment_data
+    chart_data: dict = {
+        "mean": sentiment_data["afinn mean"],
+        "variance": sentiment_data["afinn variance"],
+        "score": sentiment_data["current avg"],
+    }
+    chart_dataframe = pd.DataFrame(
+        chart_data, index=sentiment_data["report number"])
+    return chart_dataframe
+
+
 # This function simply updates the display for the most recent report
 # with the calculated sentiment data.
 def display_report(value_dict):
+    global sentiment_data
     r1.write("Report Nr. " +
              str(value_dict["report number"]) +
              " (" +
@@ -121,6 +139,13 @@ def display_report(value_dict):
              ", Variance: " +
              str(format(value_dict["afinn variance"], '.2f')) +
              ")")
+    
+    dict_key = ["report number", "afinn mean", "afinn variance", "current avg"]
+    for i in dict_key:
+        if i == "report number":
+            sentiment_data[i].append(int(value_dict[i]))
+        else:
+            sentiment_data[i].append(float(value_dict[i]))
 
 
 # User input for the channel to connect to and button
@@ -162,6 +187,7 @@ def attempt_connection():
 # threshold the emotion_report() gets called.
 def bot_loop():
     global report_interval
+    chart = st.empty()
     success_note = st.empty()
     chat_box = st.empty()
     config_data = read_config()
@@ -196,6 +222,7 @@ def bot_loop():
 
             if messages_since_report >= report_interval:
                 calculate_report()
+                chart.line_chart(calculate_chart())
                 messages_since_report = 0
 
             if len(last_messages["Messages"]) >= 10:

@@ -1,4 +1,6 @@
-# Moodmonitor
+<div align=center>
+<img src="https://s20.directupload.net/images/220615/xhbtd84n.png" width="50%" height="50%">
+</div>
 
 ## Easily perform Twitch chat sentiment & emotion analysis in real-time
 

@@ -10,7 +10,7 @@ import json
 
 # Global variables
 report_interval = 10
-reports = {}
+reports: dict = {}
 sentiment_records = {
     "total": 0.00,
     "scores": 0,
@@ -24,6 +24,9 @@ sentiment_records = {
     "afinn variance": 0.00,
     "time": "00:00:00"
 }
+
+# Page config
+st.set_page_config(page_title="Moodmonitor", page_icon="🖥️", layout="centered")
 
 # CSS
 # Hide row indices in tables.
@@ -118,6 +121,7 @@ def display_report(value_dict):
              ", Variance: " +
              str(format(value_dict["afinn variance"], '.2f')) +
              ")")
+
 
 # User input for the channel to connect to and button
 # to establish the connection.

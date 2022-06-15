@@ -1,9 +1,13 @@
 # Moodmonitor
 
- Moodmonitor is an automated IRC client which can connect to Twitch Chat and
- analyse the current sentiment and dominant emotions.
+## Easily perform Twitch chat sentiment & emotion analysis in real-time
 
- To use the Client you will need an OAuth password which is associated to
+ Moodmonitor is an automated IRC client which can connect to Twitch Chat and
+ analyse the current sentiment and dominant emotions. Currently the results of
+ the sentiment analysis can be visualized in a graph. In a future version
+ you will be able to see the result in a web dashboard.
+
+ To use the client you will need an OAuth password which is associated to
  a Twitch account and can be generated at https://twitchapps.com/tmi/
 
 ### 🔍 Sentiment analysis with Afinn

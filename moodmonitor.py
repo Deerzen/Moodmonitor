@@ -48,6 +48,24 @@ emotion_count: dict = {
     "contempt": 0,
     "coercion": 0,
 }
+emotion_data: dict = {
+    "optimism": [0],
+    "frustration": [0],
+    "aggressiveness": [0],
+    "anxiety": [0],
+    "frivolity": [0],
+    "disapproval": [0],
+    "rejection": [0],
+    "awe": [0],
+    "love": [0],
+    "envy": [0],
+    "rivalry": [0],
+    "submission": [0],
+    "gloat": [0],
+    "remorse": [0],
+    "contempt": [0],
+    "coercion": [0],
+}
 with open("moodmonitor/emote-data.json", "r") as emote_file:
     emote_data = json.loads(emote_file.read())
 
@@ -86,6 +104,7 @@ status = st.empty()
 result_header = st.subheader("Result of analysis")
 afinn_result = st.empty()
 line_chart = st.empty()
+bar_chart = st.empty()
 chat_box = st.empty()
 status.info("No connection has been established yet")
 afinn_result.info(
@@ -121,7 +140,7 @@ def emote_analysis(message) -> None:
         for emote in emote_data[emotion]:
             if emote in message:
                 emotion_count[emotion.lower()] += 1
-                break
+                return
 
 
 # This funtion calculates the values for the sentiment report and updates
@@ -129,6 +148,7 @@ def emote_analysis(message) -> None:
 # and calls ping_server() every third report.
 def calculate_report() -> None:
     global sentiment_records
+    global emotion_data
     global emotion_count
     global report_interval
 
@@ -160,6 +180,10 @@ def calculate_report() -> None:
         sentiment_records["squared sum"] / sentiment_records["report number"]
     )
 
+    # Safes the current emotion count in a global variable for the bar chart
+    for i in emotion_count:
+        emotion_data[i].append(emotion_count[i])
+
     # In this block the dominant emotion is identified and how often it has
     # been expressed relatively. Finally the emotion_count is reset
     # for the next interval.
@@ -179,7 +203,7 @@ def calculate_report() -> None:
         ping_server()
 
 
-def calculate_chart() -> pd.core.frame.DataFrame:
+def calculate_line_chart() -> pd.core.frame.DataFrame:
     global sentiment_data
     chart_data: dict = {
         "mean": sentiment_data["afinn mean"],
@@ -187,6 +211,12 @@ def calculate_chart() -> pd.core.frame.DataFrame:
         "score": sentiment_data["current avg"],
     }
     chart_dataframe = pd.DataFrame(chart_data, index=sentiment_data["report number"])
+    return chart_dataframe
+
+
+def calculate_bar_chart() -> pd.core.frame.DataFrame:
+    global emotion_data
+    chart_dataframe = pd.DataFrame(data=emotion_data)
     return chart_dataframe
 
 
@@ -205,7 +235,7 @@ def display_report(value_dict, emotion, percentage) -> None:
     )
     line3: str = (
         f"The dominant emotion appears to be {emotion}"
-        f" ({percentage} of messages contain the emotion)."
+        f" ({percentage} of messages contain this emotion)."
     )
     afinn_result.info(f"{line1}\n{line2}\n{line3}")
     dict_key: list = ["report number", "afinn mean", "afinn variance", "current avg"]
@@ -299,7 +329,8 @@ def bot_loop() -> None:
 
             if messages_since_report >= report_interval:
                 calculate_report()
-                line_chart.line_chart(calculate_chart())
+                line_chart.line_chart(calculate_line_chart())
+                bar_chart.bar_chart(calculate_bar_chart())
                 messages_since_report = 0
 
             chat_data = pd.DataFrame(last_messages)

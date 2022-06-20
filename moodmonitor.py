@@ -48,30 +48,40 @@ emotion_count: dict = {
     "contempt": 0,
     "coercion": 0,
 }
-with open ("moodmonitor/emote-data.json", "r") as emote_file:
+with open("moodmonitor/emote-data.json", "r") as emote_file:
     emote_data = json.loads(emote_file.read())
 
 # Page config
 st.set_page_config(page_title="Moodmonitor", page_icon="🖥️", layout="centered")
 
 # CSS
-# Hide row indices in tables.
+# Hides row indices in tables.
 hide_table_row_index = """
             <style>
             tbody th {display:none}
             .blank {display:none}
             </style>
             """
+st.markdown(hide_table_row_index, unsafe_allow_html=True)
+# Hides the streamlit style.
+hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
 
 # Streamlit elements for the display of the most recent report.
 # The content will be updated in display_report().
+logo = st.image("https://raw.githubusercontent.com/Deerzen/Moodmonitor/main/logo.png")
 config_header = st.subheader("Configuration")
 user_input, buttons = st.columns([3, 1])
 user_input.empty()
 with buttons:
     try_connection = st.empty()
     abort_connection = st.empty()
-status_header = st.subheader("Connection status")
 status = st.empty()
 result_header = st.subheader("Result of analysis")
 afinn_result = st.empty()
@@ -87,9 +97,7 @@ afinn_result.info(
 # Pinging the server regularly is necessary to prevent forced disconnections.
 # This function currently gets called with every third sentiment report.
 def ping_server() -> None:
-    st.session_state["server"].send(
-        str.encode("PING tmi.twitch.tv\r\n", "utf-8")
-    )
+    st.session_state["server"].send(str.encode("PING tmi.twitch.tv\r\n", "utf-8"))
 
 
 # Analyzes sentiment of message with the Afinn Module. Once the amount
@@ -108,7 +116,7 @@ def sentiment_analysis(message) -> None:
 def emote_analysis(message) -> None:
     global emotion_count
     global emote_data
-    
+
     for emotion in emote_data:
         for emote in emote_data[emotion]:
             if emote in message:
@@ -124,7 +132,7 @@ def calculate_report() -> None:
     global emotion_count
     global report_interval
 
-    #In this block the current afinn sentiment, the mean and the variance
+    # In this block the current afinn sentiment, the mean and the variance
     # are calculated.
     average = sentiment_records["total"] / sentiment_records["scores"]
     sentiment_records["current avg"] = format(average, ".2f")
@@ -140,20 +148,14 @@ def calculate_report() -> None:
     t = time.localtime()
     sentiment_records["time"] = time.strftime("%H:%M:%S", t)
     sentiment_records["report number"] += 1
-    sentiment_records["total afinn value"] += float(
-        sentiment_records["current avg"]
-    )
+    sentiment_records["total afinn value"] += float(sentiment_records["current avg"])
     sentiment_records["afinn mean"] = (
-        sentiment_records["total afinn value"]
-        / sentiment_records["report number"]
+        sentiment_records["total afinn value"] / sentiment_records["report number"]
     )
     sentiment_records["afinn deviation"] = (
-        float(sentiment_records["current avg"])
-        - sentiment_records["afinn mean"]
+        float(sentiment_records["current avg"]) - sentiment_records["afinn mean"]
     )
-    sentiment_records["squared sum"] += (
-        sentiment_records["afinn deviation"] ** 2
-    )
+    sentiment_records["squared sum"] += sentiment_records["afinn deviation"] ** 2
     sentiment_records["afinn variance"] = (
         sentiment_records["squared sum"] / sentiment_records["report number"]
     )
@@ -162,15 +164,17 @@ def calculate_report() -> None:
     # been expressed relatively. Finally the emotion_count is reset
     # for the next interval.
     dominant_emotion = max(emotion_count, key=emotion_count.get)
-    percentage = format(
-        emotion_count[dominant_emotion] / report_interval * 100, '.2f'
-        )
-    print(emotion_count)
-    print(dominant_emotion)
-    print(percentage)
+    emotion_percentage = format(
+        emotion_count[dominant_emotion] / report_interval * 100, ".2f"
+    )
+    if emotion_percentage == 0.00:
+        dominant_emotion = "unknown"
+    for i in emotion_count:
+        emotion_count[i] = 0
 
-
-    display_report(sentiment_records)
+    # This part of the function sends the calculated values to the
+    # display report function and pings the server every third report.
+    display_report(sentiment_records, dominant_emotion, emotion_percentage)
     if sentiment_records["report number"] % 3 == 0:
         ping_server()
 
@@ -182,27 +186,28 @@ def calculate_chart() -> pd.core.frame.DataFrame:
         "variance": sentiment_data["afinn variance"],
         "score": sentiment_data["current avg"],
     }
-    chart_dataframe = pd.DataFrame(
-        chart_data, index=sentiment_data["report number"]
-    )
+    chart_dataframe = pd.DataFrame(chart_data, index=sentiment_data["report number"])
     return chart_dataframe
 
 
 # This function simply updates the display for the most recent report
 # with the calculated sentiment data.
-def display_report(value_dict) -> None:
+def display_report(value_dict, emotion, percentage) -> None:
     global sentiment_data
     line1: str = (
-        "Report Nr."
-        f" {str(value_dict['report number'])} ({str(value_dict['time'])}):"
+        f"Report Nr. {str(value_dict['report number'])} ({str(value_dict['time'])}):"
     )
     line2: str = (
         f"Sentiment seems {value_dict['sentiment']} (Current Score:"
         f" {str(value_dict['current avg'])}, Mean:"
         f" {str(format(value_dict['afinn mean'], '.2f'))}, Variance:"
-        f" {str(format(value_dict['afinn variance'], '.2f'))})"
+        f" {str(format(value_dict['afinn variance'], '.2f'))})."
     )
-    afinn_result.info(f"{line1}\n{line2}")
+    line3: str = (
+        f"The dominant emotion appears to be {emotion}"
+        f" ({percentage} of messages contain the emotion)."
+    )
+    afinn_result.info(f"{line1}\n{line2}\n{line3}")
     dict_key: list = ["report number", "afinn mean", "afinn variance", "current avg"]
     for i in dict_key:
         if i == "report number":
@@ -222,9 +227,7 @@ def take_inputs() -> None:
         if channel != "":
             attempt_connection()
         else:
-            status.info(
-                "Please specify a channel to connect to and press enter."
-            )
+            status.info("Please specify a channel to connect to and press enter.")
 
 
 # Simply reads the config data from a json file and returns the content.
@@ -254,9 +257,7 @@ def attempt_connection() -> None:
         bot_loop()
     # Error message if unsuccessful.
     except Exception as e:
-        ask_for_reset = status.error(
-            f"Connection to {channel} failed: " + str(e)
-        )
+        ask_for_reset = status.error(f"Connection to {channel} failed: " + str(e))
 
 
 # Bot loop which receives all messages, decodes them and passes them to
@@ -270,46 +271,40 @@ def bot_loop() -> None:
     last_messages: dict = {
         "Messages": ["0", "0", "0", "0", "0", "0", "0", "0", "0", "0"]
     }
-    ignore = ["JOIN", ":Welcome", "PONG", "ACTION"]
+    ignore = ["JOIN", ":Welcome", "PING", "PONG"]
     chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
     connection_msg = ":tmi.twitch.tv 001 " + config_data[1] + " :Welcome, GLHF!"
 
     while True:
-        response = (
-            st.session_state["server"].recv(1024).decode("utf-8", "ignore")
-        )
+        response = st.session_state["server"].recv(1024).decode("utf-8", "ignore")
         if "PING" in response:
-            st.session_state["server"].send(
-                "PONG :tmi.twitch.tv\r\n".encode("utf-8")
-            )
+            st.session_state["server"].send("PONG :tmi.twitch.tv\r\n".encode("utf-8"))
         else:
             message = chat_msg.sub("", response)
             msg = message.split("\r\n")[0]
             msg = str(msg)
 
             if connection_msg in msg:
-                status.success(
-                    f"Connection to {channel} appears to be successful"
-                )
+                status.success(f"Connection to {channel} appears to be successful")
 
             if not any(ele in message for ele in ignore):
                 sentiment_analysis(msg)
                 emote_analysis(msg)
                 messages_since_report += 1
 
+                if len(last_messages["Messages"]) >= 10:
+                    last_messages["Messages"].pop(0)
+                    last_messages["Messages"].append(msg)
+                    processed_messages += 1
+
             if messages_since_report >= report_interval:
                 calculate_report()
                 line_chart.line_chart(calculate_chart())
                 messages_since_report = 0
 
-            if len(last_messages["Messages"]) >= 10:
-                last_messages["Messages"].pop(0)
-            last_messages["Messages"].append(msg)
-            processed_messages += 1
-
             chat_data = pd.DataFrame(last_messages)
-            st.markdown(hide_table_row_index, unsafe_allow_html=True)
-            chat_box.table(chat_data)
+            with chat_box.empty():
+                st.table(chat_data)
 
 
 if __name__ == "__main__":

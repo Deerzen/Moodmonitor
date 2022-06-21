@@ -1,0 +1,4 @@
+afinn==0.1
+pandas==1.4.2
+pandas_stubs==1.2.0.58
+streamlit==1.9.2

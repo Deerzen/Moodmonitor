@@ -9,15 +9,17 @@
  the sentiment & emotion  analysis are visualized through charts on a web-dashboard.
  In a future version the generated data is supposed to be downloadable.
 
-<div align=center>
+<div align=left>
 <img src="https://raw.githubusercontent.com/Deerzen/Moodmonitor/main/preview.PNG" width="50%" height="50%">
 </div>
+
 
 ### 🔍 Sentiment analysis with Afinn
  moodmonitor.py uses the Afinn library to judge the sentiment of
  a message in chat and calculates averages in user defined intervals.
  Since the Afinn library is designed for the English language the script
  can only be used in English speaking twitch communities.
+
 
 ### 🫂 Emotion analysis
  Emotes play a special role in the communication in Twitch chat.
@@ -39,10 +41,12 @@
  second-level emotions more accurately seems like a costlier but superior approach
  (cf. Cambria, Livingstone, Hussain 2011: 151-152).
 
+
 ### 📂 Explanation of the project structure
  The moodmonitor.py script accesses two files in the "JSON Files" folder.
  One stores the supplied OAuth Token and username. The other one contains the 
  needed data for the emotion analysis in a JSON File.
+
 
 ### 🛫 How to start analyzing with Moodmonitor
 1. Clone this repository and install requirements by simply running:
@@ -70,6 +74,7 @@ twitch user-name
 ```
 streamlit run moodmonitor.py
 ```
+
 
 ### 📚 Cited literature
  Cambira, Erik; Livingstone, Andrew; Hussain, Amir (2011): "The Hourglass of Emotions".

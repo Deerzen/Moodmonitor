@@ -2,7 +2,7 @@
 <img src="https://raw.githubusercontent.com/Deerzen/Moodmonitor/main/logo.png" width="50%" height="50%">
 </div>
 
-# Easily perform Twitch chat sentiment & emotion analysis in real-time
+## Easily perform Twitch chat sentiment & emotion analysis in real-time
 
  Moodmonitor is an automated web-based IRC client which can connect to Twitch Chat and
  analyse the current sentiment and dominant emotions. The results of both

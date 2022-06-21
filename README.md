@@ -9,7 +9,7 @@
  the sentiment & emotion  analysis are visualized through charts on a web-dashboard.
  In a future version the generated data is supposed to be downloadable.
 
-<div align=left>
+<div align=center>
 <img src="https://raw.githubusercontent.com/Deerzen/Moodmonitor/main/preview.PNG" width="50%" height="50%">
 </div>
 
@@ -55,7 +55,6 @@
 git clone https://github.com/Deerzen/Moodmonitor.git
 cd Moodmonitor
 pip install -r requirements.txt
-streamlit run moodmonitor.py
 ```
 2. To use the client you will need an OAuth password which is associated to
 a registered Twitch account. It can be easily generated at https://twitchapps.com/tmi/

@@ -66,7 +66,7 @@ emotion_data: dict = {
     "contempt": [0],
     "coercion": [0],
 }
-with open("moodmonitor/emote-data.json", "r") as emote_file:
+with open("JSON Files/emote-data.json", "r") as emote_file:
     emote_data = json.loads(emote_file.read())
 
 # Page config
@@ -262,7 +262,7 @@ def take_inputs() -> None:
 
 # Simply reads the config data from a json file and returns the content.
 def read_config() -> list:
-    config_path: str = "moodmonitor/config.json"
+    config_path: str = "JSON Files/config.json"
     with open(config_path, "r") as config_file:
         config_data = json.loads(config_file.read())
     return config_data

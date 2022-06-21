@@ -4,16 +4,17 @@
 
 ## Easily perform Twitch chat sentiment & emotion analysis in real-time
 
- Moodmonitor is an automated IRC client which can connect to Twitch Chat and
- analyse the current sentiment and dominant emotions. Currently the results of
- the sentiment analysis can be visualized in a graph. In a future version
- you will be able to see the result in a web dashboard.
+ Moodmonitor is an automated web-based IRC client which can connect to Twitch Chat and
+ analyse the current sentiment and dominant emotions. The results of both
+ the sentiment & emotion  analysis are visualized through charts on a web-dashboard.
+ In a future version the generated data is supposed to be downloadable.
 
- To use the client you will need an OAuth password which is associated to
- a Twitch account and can be generated at https://twitchapps.com/tmi/
+<div align=center>
+<img src="https://raw.githubusercontent.com/Deerzen/Moodmonitor/main/preview.png" width="50%" height="50%">
+</div>
 
 ### 🔍 Sentiment analysis with Afinn
- moodbarometer.py uses the Afinn library to judge the sentiment of
+ moodmonitor.py uses the Afinn library to judge the sentiment of
  a message in chat and calculates averages in user defined intervals.
  Since the Afinn library is designed for the English language the script
  can only be used in English speaking twitch communities.
@@ -21,7 +22,7 @@
 ### 🫂 Emotion analysis
  Emotes play a special role in the communication in Twitch chat.
  However, a sentiment analysis with Afinn is unable to grasp this dimension.
- That is why moodbarometer.py uses an innovative approach of analysing
+ That is why moodmonitor.py uses an innovative approach of analysing
  dominant emotions. The approach to classification is based on the
  psychological model "The Hourglass of Emotions" (Cambria, Livingstone, Hussain 2011).
  More specifically the second-level emotions (ibid.: 153) have been used
@@ -39,13 +40,36 @@
  (cf. Cambria, Livingstone, Hussain 2011: 151-152).
 
 ### 📂 Explanation of the project structure
- The moodbarometer.py script generates two files in the working directory.
- One stores the supplied OAuth Token and username. The other one saves
- the generated reports in a JSON File. The second script graphsentiment.py tries
- to access the generated JSON file and uses the Matplotlib library to graph
- the recorded data points of the sentiment analysis live. Currently
- graphsentiment.py might crash when it tries to read the recorded data while
- moodbarometer.py is writing to the file.
+ The moodmonitor.py script accesses two files in the "JSON Files" folder.
+ One stores the supplied OAuth Token and username. The other one contains the 
+ needed data for the emotion analysis in a JSON File.
+
+### 🛫 How to start analyzing with Moodmonitor
+1. Clone this repository and install requirements by simply running:
+
+```
+git clone https://github.com/Deerzen/Moodmonitor.git
+cd Moodmonitor
+pip install -r requirements.txt
+streamlit run moodmonitor.py
+```
+2. To use the client you will need an OAuth password which is associated to
+a registered Twitch account. It can be easily generated at https://twitchapps.com/tmi/
+
+3. Open the folder "JSON Files" and create a file named config.json
+
+4. Add an array to the file and enter your OAuth password and associated
+twitch user-name
+
+```
+["generated oauth password", "associated user-name"]
+```
+
+5. You are now set to run the app:
+
+```
+streamlit run moodmonitor.py
+```
 
 ### 📚 Cited literature
  Cambira, Erik; Livingstone, Andrew; Hussain, Amir (2011): "The Hourglass of Emotions".

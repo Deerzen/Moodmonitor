@@ -10,7 +10,7 @@
  In a future version the generated data is supposed to be downloadable.
 
 <div align=center>
-<img src="https://raw.githubusercontent.com/Deerzen/Moodmonitor/main/preview.png" width="50%" height="50%">
+<img src="https://raw.githubusercontent.com/Deerzen/Moodmonitor/main/preview.PNG" width="50%" height="50%">
 </div>
 
 ### 🔍 Sentiment analysis with Afinn

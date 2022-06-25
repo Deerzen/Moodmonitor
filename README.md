@@ -5,7 +5,7 @@
 ## Easily perform Twitch chat sentiment & emotion analysis in real-time
 
  Moodmonitor is an automated web-based IRC client which can connect to Twitch Chat and
- analyse the current sentiment and dominant emotions. The results of both
+ analyze the current sentiment and dominant emotions. The results of both
  the sentiment & emotion  analysis are visualized through charts on a web-dashboard.
  In a future version the generated data is supposed to be downloadable.
 
@@ -15,7 +15,7 @@
 
 
 ## 🔍 Sentiment analysis with Afinn
- moodmonitor.py uses the Afinn library (Nielsen 2011) to judge the sentiment of
+ Moodmonitor uses the Afinn library (Nielsen 2011) to judge the sentiment of
  a message in chat and calculates averages in user defined intervals.
  Since the Afinn library is primarily designed for the English language the script
  can only be used in English speaking twitch communities.
@@ -24,7 +24,7 @@
 ## 🫂 Emotion analysis
  Emotes play a special role in the communication in Twitch chat.
  However, a sentiment analysis with Afinn is unable to grasp this dimension.
- That is why moodmonitor.py uses an innovative approach of analysing
+ That is why Moodmonitor uses an innovative approach of analyzing
  dominant emotions. The approach to classification is based on the
  psychological model "The Hourglass of Emotions" (Cambria, Livingstone, Hussain 2011).
  More specifically the second-level emotions (ibid.: 153) have been used
@@ -44,33 +44,35 @@
 
 ## 📂 Explanation of the project structure
  The moodmonitor.py script accesses two files in the "JSON Files" folder.
- One stores the supplied OAuth Token and username. The other one contains the 
+ One stores the supplied OAuth Token and username. It will be created when you use
+ the application for the first time. The other one contains the 
  needed data for the emotion analysis in a JSON File.
 
+## Problems regarding validity
+ Since all emotes have been categorized by myself in 2020 there may be problems 
+ regarding the validity of the generated emotion reports. The meaning of Twitch
+ emotes may be ambiguous, it most likely changes over time and different contexts
+ can have different connotations. The popular emote "OMEGALUL" i.e.
+ is most commonly used to express gloat when a fail occurs but it could also be used to 
+ express genuine approval of a funny joke which would express optimism.
+ All of these caveats are not addressed with the current hard coded approach
+ to the classification of emotes.
+ However, a machine learning algorithm may be capable of addressing
+ these problems in the future. Alternatively regular surveys of Twitch users
+ could also be a worthwhile approach to solve these problems.
 
 ## 🛫 How to start analyzing with Moodmonitor
-1. Clone this repository and install requirements by simply running:
+1. Simply clone this repository, install requirements and run the script locally.
+You can simply complete these steps by running:
 
 ```
 git clone https://github.com/Deerzen/Moodmonitor.git
 cd Moodmonitor
 pip install -r requirements.txt
-```
-2. To use the client you will need an OAuth password which is associated to
-a registered Twitch account. It can be easily generated at https://twitchapps.com/tmi/
-
-3. Open the folder "JSON Files" and create a file named config.json - add an array
-to the file and enter your OAuth password and associated twitch user-name:
-
-```
-["generated oauth password", "associated user-name"]
-```
-
-4. You are now set to run the app:
-
-```
 streamlit run moodmonitor.py
 ```
+2. Alternativly you can try out the app online
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/deerzen/moodmonitor/main/moodmonitor.py)
 
 
 ## 📚 Cited literature

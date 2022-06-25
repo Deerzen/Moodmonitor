@@ -9,6 +9,11 @@ import time
 import json
 
 # Global variables
+if "is_connected" not in st.session_state:
+    st.session_state["is_connected"] = False
+if "components_initialized" not in st.session_state:
+    st.session_state["components_initialized"] = False
+
 report_interval: int = 15
 channel: str = ""
 sentiment_data: dict = {
@@ -69,7 +74,8 @@ emotion_data: dict = {
 with open("JSON Files/emote-data.json", "r") as emote_file:
     emote_data = json.loads(emote_file.read())
 
-# Page config
+
+# Configuration of page title, icon and layout
 st.set_page_config(page_title="Moodmonitor", page_icon="🖥️", layout="centered")
 
 # CSS
@@ -91,27 +97,40 @@ hide_st_style = """
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
-# Streamlit elements for the display of the most recent report.
-# The content will be updated in display_report().
 logo = st.image("https://raw.githubusercontent.com/Deerzen/Moodmonitor/main/logo.png")
-config_header = st.subheader("Configuration")
-user_input, buttons = st.columns([3, 1])
-user_input.empty()
-with buttons:
-    try_connection = st.empty()
-    abort_connection = st.empty()
-status = st.empty()
-result_header = st.subheader("Result of analysis")
-afinn_result = st.empty()
-line_chart = st.empty()
-bar_chart = st.empty()
-chat_box = st.empty()
-status.info("No connection has been established yet")
-afinn_result.info(
-    "The generation of reports will start once you have connected to a valid"
-    " Twitch channel and enough data has been collected."
-)
 
+config_path = "JSON Files/config.json"
+if not os.path.exists(config_path):
+    with st.form(key="credentials"):
+        explanation = st.markdown(
+            "Enter your Twitch username and connect moodmonitor with a valid OAuth token "
+            "(can easily be generated at https://twitchapps.com/tmi/)"
+        )
+        username = st.text_input("Twitch Username").lower()
+        oauth = st.text_input("Twitch OAuth Token")
+        if st.form_submit_button("Submit"):
+            config_data = [oauth, username]
+            with open(config_path, "w") as config_file:
+                json.dump(config_data, config_file)
+
+else:
+    with st.form(key="configuration"):
+        config_header = st.subheader("Configuration")
+        status = st.empty()
+        user_input = st.empty()
+        connect = st.form_submit_button("Connect")
+    status.info("No connection has been established yet")
+
+    result_header = st.subheader("Result of analysis")
+    afinn_result = st.empty()
+    line_chart = st.empty()
+    bar_chart = st.empty()
+    chat_box = st.empty()
+    afinn_result.info(
+        "The generation of reports will start once you have connected to a valid"
+        " Twitch channel and enough data has been collected."
+    )
+    st.session_state["components_initialized"] = True
 
 # Pinging the server regularly is necessary to prevent forced disconnections.
 # This function currently gets called with every third sentiment report.
@@ -251,9 +270,7 @@ def display_report(value_dict, emotion, percentage) -> None:
 def take_inputs() -> None:
     global channel
     channel = user_input.text_input("Twitch channel to monitor").lower()
-    if abort_connection.button("Abort connection"):
-        pass
-    if try_connection.button("Attempt connection"):
+    if connect:  # Meaning the connect button has been pressed
         if channel != "":
             attempt_connection()
         else:
@@ -284,6 +301,7 @@ def attempt_connection() -> None:
         st.session_state["server"].send(
             bytes("JOIN " + f"#{channel}" + "\r\n", "utf-8")
         )
+        st.session_state["is_connected"] = True
         bot_loop()
     # Error message if unsuccessful.
     except Exception as e:
@@ -305,7 +323,7 @@ def bot_loop() -> None:
     chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
     connection_msg = ":tmi.twitch.tv 001 " + config_data[1] + " :Welcome, GLHF!"
 
-    while True:
+    while st.session_state["is_connected"]:
         response = st.session_state["server"].recv(1024).decode("utf-8", "ignore")
         if "PING" in response:
             st.session_state["server"].send("PONG :tmi.twitch.tv\r\n".encode("utf-8"))
@@ -339,4 +357,5 @@ def bot_loop() -> None:
 
 
 if __name__ == "__main__":
-    take_inputs()
+    if os.path.exists(config_path) and st.session_state["components_initialized"]:
+        take_inputs()

@@ -71,7 +71,7 @@ emotion_data: dict = {
     "contempt": [0],
     "coercion": [0],
 }
-with open("JSON Files/emote-data.json", "r") as emote_file:
+with open("JSON-Files/emote-data.json", "r") as emote_file:
     emote_data = json.loads(emote_file.read())
 
 
@@ -99,7 +99,7 @@ st.markdown(hide_st_style, unsafe_allow_html=True)
 
 logo = st.image("https://raw.githubusercontent.com/Deerzen/Moodmonitor/main/logo.png")
 
-config_path = "JSON Files/config.json"
+config_path = "JSON-Files/config.json"
 if not os.path.exists(config_path):
     with st.form(key="credentials"):
         explanation = st.markdown(
@@ -279,7 +279,7 @@ def take_inputs() -> None:
 
 # Simply reads the config data from a json file and returns the content.
 def read_config() -> list:
-    config_path: str = "JSON Files/config.json"
+    config_path: str = "JSON-Files/config.json"
     with open(config_path, "r") as config_file:
         config_data = json.loads(config_file.read())
     return config_data
@@ -305,7 +305,7 @@ def attempt_connection() -> None:
         bot_loop()
     # Error message if unsuccessful.
     except Exception as e:
-        ask_for_reset = status.error(f"Connection to {channel} failed: " + str(e))
+        error_message = status.error(f"Connection to {channel} failed: " + str(e))
 
 
 # Bot loop which receives all messages, decodes them and passes them to

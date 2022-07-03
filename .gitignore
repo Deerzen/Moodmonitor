@@ -1,3 +1,7 @@
-
 JSON Files/config.json
 JSON Files/data.json
+ML Emote Classifier/emote-dict.json
+ML Emote Classifier/scraped-emotes.json
+ML Emote Classifier/geckodriver.log
+ML Emote Classifier/geckodriver.exe
+ML Emote Classifier/geckodriver.txt

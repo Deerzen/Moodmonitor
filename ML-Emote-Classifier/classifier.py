@@ -72,27 +72,25 @@ def linear_regression(x, y, evaluations_length) -> float:
 def classify_emotes(emote_array, last_evaluations) -> list:
     global emote_data
     dimensions = ["pleasentness", "attention", "sensitivity", "aptitude"]
-    pl = []
-    at = []
-    se = []
-    ap = []
+    formated_evaluations = {"pl": [], "at": [], "se": [], "ap": []}
+
     evaluation_numbers = []
     for i in range(len(last_evaluations)):
         evaluation_numbers.append(i)
 
     for evaluation in last_evaluations:
-        pl.append(evaluation[0])
-        at.append(evaluation[1])
-        se.append(evaluation[2])
-        ap.append(evaluation[3])
+        formated_evaluations["pl"].append(evaluation[0])
+        formated_evaluations["at"].append(evaluation[1])
+        formated_evaluations["se"].append(evaluation[2])
+        formated_evaluations["ap"].append(evaluation[3])
 
     df = pd.DataFrame(
         {
             "numbers": evaluation_numbers,
-            dimensions[0]: pl,
-            dimensions[1]: at,
-            dimensions[2]: se,
-            dimensions[3]: ap,
+            dimensions[0]: formated_evaluations["pl"],
+            dimensions[1]: formated_evaluations["at"],
+            dimensions[2]: formated_evaluations["se"],
+            dimensions[3]: formated_evaluations["ap"],
         }
     )
 
@@ -111,7 +109,8 @@ def classify_emotes(emote_array, last_evaluations) -> list:
         emote_dict_entry = emote_data[emote]
 
         if prediction != [0, 0, 0, 0]:
-            emote_dict_entry["times tested"] += 1
+
+            emote_dict_entry["times tested"] += 1 - (prediction.count(0) * 0.25)
             emote_dict_entry["pleasentness"] = round(
                 emote_dict_entry["pleasentness"] + prediction[0], 2
             )

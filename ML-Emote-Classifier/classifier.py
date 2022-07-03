@@ -6,14 +6,20 @@ import warnings
 import statsmodels.api as sm
 import re
 
+# Turning off the occasional run time warning during linear regression
 warnings.filterwarnings("ignore", category=RuntimeWarning)
 
+# Loading the scraped emote data from stream elements and the json file containing
+# the collected information on emotes. The scraper script must have been
+# executed once before this script can load the required files.
 with open("scraped-emotes.json", "r") as scrape_file:
     scraped_emotes = json.loads(scrape_file.read())
-
 with open("emote-dict.json", "r") as emote_file:
     emote_data = json.loads(emote_file.read())
 
+# This table enables the script later to identify the most likely emotion
+# based on the collected information on pleasentness, attention, sensitivity
+# and aptitude.
 emotion_table: list = [
     ["optimism", "frivolity", "love", "gloat"],
     ["frustation", "disapproval", "envy", "remorse"],
@@ -21,25 +27,34 @@ emotion_table: list = [
     ["anxiety", "awe", "submission", "coercion"],
 ]
 
+# Loading the required config data to connect to twitch chat. This must
+# have been setup by running the moodmonitor.py script before the needed information
+# can be loaded in this script.
 config_path: str = "../JSON-Files/config.json"
 with open(config_path, "r") as config_file:
     config_data = json.loads(config_file.read())
 
 
+# Identifies all known emotes in a message and returns them in an array.
+# For identification it relies on the scraped emote data.
 def emote_finder(message) -> list:
     global scraped_emotes
     message_list = [message][0].split()
     emote_list = []
+
     for emote in scraped_emotes:
         for word in message_list:
             if emote == word and emote not in emote_list:
                 emote_list.append(emote)
+
     return emote_list
 
 
-# This function can create averages of lists with four integers
+# This function takes a list with pleasentness, attention, sensitivity and aptitude
+# data, polarizes the average of the respective value to 0, 1 or -1 and returns the outcome.
 def merge_lists(lists) -> list:
     merged_list = [0, 0, 0, 0]
+
     for array in lists:
         for i in range(len(array)):
             merged_list[i] += array[i]
@@ -55,6 +70,10 @@ def merge_lists(lists) -> list:
     return merged_list
 
 
+# Simply takes two variables and the length of the evaluations list and calculates
+# with a linear regression what the next value will most likely be. In case the
+# calculated coefficients are statistically significant it returns the prediction.
+# If they are not, a 0 is being returned.
 def linear_regression(x, y, evaluations_length) -> float:
     x = sm.add_constant(x)
     model = sm.OLS(y, x).fit()
@@ -69,21 +88,27 @@ def linear_regression(x, y, evaluations_length) -> float:
         return 0
 
 
+# This function classifies the identified emotes using the four dimensions
+# pleasentness, attention, sensitivity and aptitude and returns the predicted
+# float values for all four dimensions in an array.
 def classify_emotes(emote_array, last_evaluations) -> list:
     global emote_data
     dimensions = ["pleasentness", "attention", "sensitivity", "aptitude"]
     formated_evaluations = {"pl": [], "at": [], "se": [], "ap": []}
 
+    # Essentially adds the index numbers of the last evaluations to an array
+    # and the values to the respective key in the formated_evaluations dictionary.
     evaluation_numbers = []
     for i in range(len(last_evaluations)):
         evaluation_numbers.append(i)
-
     for evaluation in last_evaluations:
         formated_evaluations["pl"].append(evaluation[0])
         formated_evaluations["at"].append(evaluation[1])
         formated_evaluations["se"].append(evaluation[2])
         formated_evaluations["ap"].append(evaluation[3])
 
+    # The formatted data can now be transformed in a pandas dataframe for the
+    # linear regression.
     df = pd.DataFrame(
         {
             "numbers": evaluation_numbers,
@@ -94,6 +119,7 @@ def classify_emotes(emote_array, last_evaluations) -> list:
         }
     )
 
+    #
     prediction = [0, 0, 0, 0]
     if len(last_evaluations) >= 20:
         current_dimension = 0

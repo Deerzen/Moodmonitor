@@ -1,19 +1,21 @@
+import bs4
 from bs4 import BeautifulSoup
 from selenium import webdriver
 import json
 import os
 
-driver = webdriver.Firefox()
-driver.get("https://stats.streamelements.com/c/global")
 
-soup = BeautifulSoup(driver.page_source, "lxml")
-emotes = soup.find_all("div", attrs={"class": "c0111 c0116 c01134"})
+def scrape_emotes():
+    driver = webdriver.Firefox()
+    driver.get("https://stats.streamelements.com/c/global")
+    soup = BeautifulSoup(driver.page_source, "lxml")
+    emotes = soup.find_all("div", attrs={"class": "c0111 c0116 c01134"})
+    driver.quit()
 
-driver.quit()
+    return emotes
 
 
-def save_top_emotes():
-    global emotes
+def save_top_emotes(emotes) -> bs4.element.ResultSet:
     formatted_emotes = []
     index = 0
     for emote in emotes:
@@ -74,7 +76,9 @@ def save_new_emotes():
 
 
 def execute():
-    save_top_emotes()
+    emotes = scrape_emotes()
+    print(type(emotes))
+    save_top_emotes(emotes)
     if not os.path.exists("emote-dict.json"):
         initialize_emote_dictionary()
     else:

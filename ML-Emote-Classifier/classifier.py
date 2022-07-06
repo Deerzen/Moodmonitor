@@ -50,8 +50,8 @@ def emote_finder(message) -> list:
     return emote_list
 
 
-# This function takes a list with pleasentness, attention, sensitivity and aptitude
-# data, polarizes the average of the respective value to 0, 1 or -1 and returns the outcome.
+# Takes a list with pleasentness, attention, sensitivity and aptitude
+# data, calculates the average for each dimenension and returns a merged list.
 def merge_lists(lists) -> list:
     merged_list = [0, 0, 0, 0]
 
@@ -60,12 +60,7 @@ def merge_lists(lists) -> list:
             merged_list[i] += array[i]
 
     for i in range(len(merged_list)):
-        if round(merged_list[i] / len(lists), 2) < -0.1:
-            merged_list[i] = -1
-        elif round(merged_list[i] / len(lists), 2) > 0.1:
-            merged_list[i] = 1
-        else:
-            merged_list[i] = 0
+        merged_list[i] = merged_list[i] / len(lists)
 
     return merged_list
 
@@ -88,10 +83,10 @@ def linear_regression(x, y, evaluations_length) -> float:
         return 0
 
 
-# This function classifies the identified emotes using the four dimensions
+# Classifies the identified emotes using the four dimensions
 # pleasentness, attention, sensitivity and aptitude and returns the predicted
 # float values for all four dimensions in an array.
-def classify_emotes(emote_array, last_evaluations) -> list:
+def classify_emotes(emote_array, last_evaluations, needed_evaluations) -> list:
     global emote_data
     dimensions = ["pleasentness", "attention", "sensitivity", "aptitude"]
     formated_evaluations = {"pl": [], "at": [], "se": [], "ap": []}
@@ -119,9 +114,11 @@ def classify_emotes(emote_array, last_evaluations) -> list:
         }
     )
 
-    #
+    # Checks if the record of evaluations has enough data for linear regression.
+    # If it does a linear regression is performed for every emotion dimension.
+    # The outcomes are saved in the prediction variable.
     prediction = [0, 0, 0, 0]
-    if len(last_evaluations) >= 20:
+    if len(last_evaluations) >= needed_evaluations:
         current_dimension = 0
         x = df[["numbers"]]
         for dimension in dimensions:
@@ -135,20 +132,14 @@ def classify_emotes(emote_array, last_evaluations) -> list:
         emote_dict_entry = emote_data[emote]
 
         if prediction != [0, 0, 0, 0]:
-
             emote_dict_entry["times tested"] += 1 - (prediction.count(0) * 0.25)
-            emote_dict_entry["pleasentness"] = round(
-                emote_dict_entry["pleasentness"] + prediction[0], 2
-            )
-            emote_dict_entry["attention"] = round(
-                emote_dict_entry["attention"] + prediction[1], 2
-            )
-            emote_dict_entry["sensitivity"] = round(
-                emote_dict_entry["sensitivity"] + prediction[2], 2
-            )
-            emote_dict_entry["aptitude"] = round(
-                emote_dict_entry["aptitude"] + prediction[3], 2
-            )
+            index = 0
+            for dimension in dimensions:
+                emote_dict_entry[dimension] = round(
+                    emote_dict_entry[dimension] + prediction[index], 2
+                )
+                index += 1
+
             print(f"Emote: {emote}")
             print(f"Prediction: {prediction}")
             emote_dict_entry["likely emotion"] = identify_emotion(emote_dict_entry)
@@ -231,16 +222,12 @@ def find_data_keys(pair, values) -> list:
 
 # checks for negative or positive values for one of two possible combinations and returns the appropriate key
 def return_key(combination, value) -> int:
-    if combination == 1:
-        if value < 0:
-            return 1
-        else:
-            return 0
-    elif combination == 2:
-        if value < 0:
-            return 3
-        else:
-            return 2
+    return_values = {1: [1, 0], 2: [3, 2]}
+
+    if value < 0:
+        return return_values[combination][0]
+    else:
+        return return_values[combination][1]
 
 
 def attempt_connection() -> None:
@@ -264,7 +251,7 @@ def attempt_connection() -> None:
 def bot_loop(server, is_connected) -> None:
     global emote_data
     chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
-    max_evaluations = 20
+    max_evaluations = 30
     messages_received = 0
     last_evaluations = [
         [0, 0, 0, 0],
@@ -281,7 +268,9 @@ def bot_loop(server, is_connected) -> None:
 
             emote_array = emote_finder(msg)
             if emote_array != []:
-                classification = classify_emotes(emote_array, last_evaluations)
+                classification = classify_emotes(
+                    emote_array, last_evaluations, max_evaluations
+                )
                 last_evaluations.append(classification)
             if len(last_evaluations) > max_evaluations:
                 last_evaluations.pop(0)

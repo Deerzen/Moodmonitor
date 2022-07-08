@@ -21,6 +21,7 @@ with open("scraped-emotes.json", "r") as scrape_file:
     scraped_emotes = json.loads(scrape_file.read())
 with open("emote-dict.json", "r") as emote_file:
     emote_data = json.loads(emote_file.read())
+starting_point = emote_data
 
 # This table enables the script later to identify the most likely emotion
 # based on the collected information on pleasentness, attention, sensitivity
@@ -148,7 +149,9 @@ def classify_emotes(emote_array, last_evaluations, needed_evaluations) -> list:
 
             print(f"Emote: {emote}")
             print(f"Prediction: {prediction}")
-            emote_dict_entry["likely emotion"] = identify_emotion(emote_dict_entry)
+            emote_dict_entry["likely emotion"] = identify_emotion(
+                emote_dict_entry, True
+            )
 
         emote_values = [
             emote_dict_entry["pleasentness"] / emote_dict_entry["times tested"][0],
@@ -162,7 +165,7 @@ def classify_emotes(emote_array, last_evaluations, needed_evaluations) -> list:
     return average_values
 
 
-def identify_emotion(emote) -> str:
+def identify_emotion(emote, is_printing) -> str:
     global emotion_table
     values = [
         emote["pleasentness"],
@@ -182,10 +185,11 @@ def identify_emotion(emote) -> str:
         round(emote["sensitivity"] / emote["times tested"][2], 2),
         round(emote["aptitude"] / emote["times tested"][3], 2),
     ]
-    print(f"Times tested: {emote['times tested']}")
-    print(
-        f"Pl: {evaluation[0]}, At: {evaluation[1]}, Se: {evaluation[2]}, Ap: {evaluation[3]}"
-    )
+    if is_printing:
+        print(f"Times tested: {emote['times tested']}")
+        print(
+            f"Pl: {evaluation[0]}, At: {evaluation[1]}, Se: {evaluation[2]}, Ap: {evaluation[3]}"
+        )
 
     key: list = [0, 0]
     if hierarchy[0] > hierarchy[2]:
@@ -203,8 +207,9 @@ def identify_emotion(emote) -> str:
         else:
             key = find_data_keys([2, 3], values)
 
-    print(f"Likely emotion: {emotion_table[key[0]][key[1]]}")
-    print("")
+    if is_printing:
+        print(f"Likely emotion: {emotion_table[key[0]][key[1]]}")
+        print("")
     return emotion_table[key[0]][key[1]]
 
 
@@ -236,6 +241,36 @@ def return_key(combination, value) -> int:
         return return_values[combination][1]
 
 
+def evaluate_dict_emotions():
+    with open("emote-dict.json", "r") as emote_file:
+        current_data = json.loads(emote_file.read())
+
+    for emote in current_data:
+        current_data[emote]["likely emotion"] = identify_emotion(
+            current_data[emote], False
+        )
+
+    with open("emote-dict.json", "w") as emote_file:
+        json.dump(current_data, emote_file)
+
+
+def save_data():
+    global emote_data
+    global starting_point
+    current_data = emote_data
+
+    with open("emote-dict.json", "w") as emote_file:
+        json.dump(current_data, emote_file)
+        print("------ DATA SAVED ------")
+        print("")
+
+    evaluate_dict_emotions()
+
+    with open("emote-dict.json", "r") as emote_file:
+        emote_data = json.loads(emote_file.read())
+        starting_point = emote_data
+
+
 def attempt_connection() -> None:
     global config_data
     channel = str(input("Channel to connect to: ")).lower()
@@ -258,11 +293,12 @@ def attempt_connection() -> None:
 def bot_loop(server, is_connected) -> None:
     global emote_data
     chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
-    max_evaluations = 30
+    max_evaluations = 40
     messages_received = 0
     last_evaluations = [
         [0, 0, 0, 0],
     ]
+    evaluate_dict_emotions()
     while is_connected:
         response = server.recv(1024).decode("utf-8", "ignore")
         if "PING" in response:
@@ -282,12 +318,7 @@ def bot_loop(server, is_connected) -> None:
             if len(last_evaluations) > max_evaluations:
                 last_evaluations.pop(0)
             if messages_received % 500 == 0:
-                with open("emote-dict.json", "w") as emote_file:
-                    json.dump(emote_data, emote_file)
-                    print("------ DATA SAVED ------")
-                    print("")
-                with open("emote-dict.json", "r") as emote_file:
-                    emote_data = json.loads(emote_file.read())
+                save_data()
             elif messages_received % 900 == 0:
                 server.send(str.encode("PING tmi.twitch.tv\r\n", "utf-8"))
 

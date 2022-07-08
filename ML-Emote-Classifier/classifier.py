@@ -5,9 +5,14 @@ import traceback
 import warnings
 import statsmodels.api as sm
 import re
+import scraper
 
 # Turning off the occasional run time warning during linear regression
 warnings.filterwarnings("ignore", category=RuntimeWarning)
+
+# Scraping new emotes
+print("")
+scraper.execute()
 
 # Loading the scraped emote data from stream elements and the json file containing
 # the collected information on emotes. The scraper script must have been
@@ -132,12 +137,13 @@ def classify_emotes(emote_array, last_evaluations, needed_evaluations) -> list:
         emote_dict_entry = emote_data[emote]
 
         if prediction != [0, 0, 0, 0]:
-            emote_dict_entry["times tested"] += 1 - (prediction.count(0) * 0.25)
             index = 0
             for dimension in dimensions:
                 emote_dict_entry[dimension] = round(
                     emote_dict_entry[dimension] + prediction[index], 2
                 )
+                if prediction[index] != 0:
+                    emote_dict_entry["times tested"][index] += 1
                 index += 1
 
             print(f"Emote: {emote}")
@@ -145,10 +151,10 @@ def classify_emotes(emote_array, last_evaluations, needed_evaluations) -> list:
             emote_dict_entry["likely emotion"] = identify_emotion(emote_dict_entry)
 
         emote_values = [
-            emote_dict_entry["pleasentness"] / emote_dict_entry["times tested"],
-            emote_dict_entry["attention"] / emote_dict_entry["times tested"],
-            emote_dict_entry["sensitivity"] / emote_dict_entry["times tested"],
-            emote_dict_entry["aptitude"] / emote_dict_entry["times tested"],
+            emote_dict_entry["pleasentness"] / emote_dict_entry["times tested"][0],
+            emote_dict_entry["attention"] / emote_dict_entry["times tested"][1],
+            emote_dict_entry["sensitivity"] / emote_dict_entry["times tested"][2],
+            emote_dict_entry["aptitude"] / emote_dict_entry["times tested"][3],
         ]
         value_list.append(emote_values)
 
@@ -171,10 +177,10 @@ def identify_emotion(emote) -> str:
         else:
             hierarchy[i] = values[i]
     evaluation = [
-        round(emote["pleasentness"] / emote["times tested"], 2),
-        round(emote["attention"] / emote["times tested"], 2),
-        round(emote["sensitivity"] / emote["times tested"], 2),
-        round(emote["aptitude"] / emote["times tested"], 2),
+        round(emote["pleasentness"] / emote["times tested"][0], 2),
+        round(emote["attention"] / emote["times tested"][1], 2),
+        round(emote["sensitivity"] / emote["times tested"][2], 2),
+        round(emote["aptitude"] / emote["times tested"][3], 2),
     ]
     print(f"Times tested: {emote['times tested']}")
     print(
@@ -233,6 +239,7 @@ def return_key(combination, value) -> int:
 def attempt_connection() -> None:
     global config_data
     channel = str(input("Channel to connect to: ")).lower()
+    print("")
     try:
         server = socket.socket()
         server.connect(("irc.chat.twitch.tv", 6667))

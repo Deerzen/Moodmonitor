@@ -21,6 +21,7 @@ config_path: str = "../JSON-Files/config.json"
 with open(config_path, "r", encoding="utf8") as config_file:
     CONFIG_DATA = json.loads(config_file.read())
 DIMENSIONS = ["pleasentness", "attention", "sensitivity", "aptitude"]
+EVALUATIONS_FOR_REGRESSION = 40
 
 
 def emote_finder(message, scraped_emotes) -> list:
@@ -55,9 +56,10 @@ def merge_lists(lists) -> list:
 
 
 def save_prediction(emote, prediction, prediction_data) -> list:
-    print("saved")
-    collected_data: list = prediction_data
+    """Formats the collected prediction data for a particular emote in a message
+    and returns a dictionary object that will be added to the prediction_data list."""
 
+    collected_data: list = prediction_data
     result: dict = {
         "emote": "",
         "times tested": [0, 0, 0, 0],
@@ -80,15 +82,22 @@ def save_prediction(emote, prediction, prediction_data) -> list:
 
 
 def evaluate_dict_emotions(dictionary) -> dict:
+    """Loops through the dictionary and interprets the data for every emote.
+    Based on a table in the interpreter module it assigns the most likely emotion"""
+
     for emote in dictionary:
         dictionary[emote]["likely emotion"] = interpreter.identify_emotion(
             dictionary[emote], False
         )
-
     return dictionary
 
 
 def handle_predictions(prediction, emote_array, emote_data, prediction_data) -> list:
+    """For every emote in a message it passes available prediction data
+    to the save_prediction function. Also it creates average values for all dimensions
+    based on the emote_data dictionary. It returns the mutated prediction_data and
+    the calculated average values"""
+
     value_list = []
     for emote in emote_array:
         emote_dict_entry = emote_data[emote]
@@ -107,6 +116,9 @@ def handle_predictions(prediction, emote_array, emote_data, prediction_data) -> 
 
 
 def integrate_predictions(emote_data, prediction_data) -> dict:
+    """Simply integrates the collected prediction data in the emote_data dictionary.
+    The mutated dictionary is returned by the function"""
+
     dictionary = emote_data
     data_points = [
         "times tested",
@@ -131,26 +143,17 @@ def integrate_predictions(emote_data, prediction_data) -> dict:
                         dictionary[emote][point] = round(
                             dictionary[emote][point] + prediction[point], 2
                         )
-
     return dictionary
 
 
 def save_data(emote_data, prediction_data) -> list:
-
-    print(prediction_data)
+    """Integrates the collected data in the emote_data and saves it to the json file"""
 
     with open("emote-dict.json", "r", encoding="utf8") as json_file:
         json_data = json.loads(json_file.read())
 
     new_dict = integrate_predictions(json_data, prediction_data)
     new_dict = evaluate_dict_emotions(new_dict)
-
-    print(new_dict)
-    exit()
-
-    # print("new dict (json data + prediction data):")
-    # print(new_dict)
-    # print("")
 
     with open("emote-dict.json", "w", encoding="utf8") as emote_dict:
         json.dump(new_dict, emote_dict)
@@ -164,6 +167,9 @@ def save_data(emote_data, prediction_data) -> list:
 
 
 def attempt_connection() -> None:
+    """Tries to establish a connection to the desired twitch chat. If successful it
+    calls the main loop"""
+
     channel = str(input("Channel to connect to: ")).lower()
     print("")
     try:
@@ -175,13 +181,31 @@ def attempt_connection() -> None:
         is_connected = True
         bot_loop(server, is_connected)
     # Error message if unsuccessful.
-    except Exception as e:
-        error_message = f"Connection to {channel} failed: " + str(e)
+    except Exception as error:
+        error_message = f"Connection to {channel} failed: " + str(error)
         print(error_message)
         traceback.print_exc()
 
 
+def handle_emote_msg(last_evaluations, emote_array, emote_data, prediction_data):
+    """This function calls other functions to create a prediction, process it
+    and to return average values for every dimension that will be used for future
+    predictions"""
+
+    prediction = predictor.classify_emotes(
+        last_evaluations, EVALUATIONS_FOR_REGRESSION, DIMENSIONS
+    )
+    result = handle_predictions(prediction, emote_array, emote_data, prediction_data)
+    average_values = merge_lists(result[0])
+
+    # returns prediction data and average values for all dimensions
+    return [result[1], average_values]
+
+
 def bot_loop(server, is_connected) -> None:
+    """Main function which is in a loop as long as the connection to twitch chat
+    persists. Every message is decoded & processed in other functions
+    based on the contents."""
 
     # Loading the scraped emote data from stream elements and the json file containing
     # the collected information on emotes. The scraper script must have been
@@ -194,7 +218,6 @@ def bot_loop(server, is_connected) -> None:
     prediction_data = []
 
     chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
-    max_evaluations = 20
     messages_received = 0
     last_evaluations = [
         [0, 0, 0, 0],
@@ -209,24 +232,25 @@ def bot_loop(server, is_connected) -> None:
             message = chat_msg.sub("", response)
             msg = message.split("\r\n")[0]
             msg = str(msg)
-
             emote_array = emote_finder(msg, scraped_emotes)
+
             if emote_array:
-                prediction = predictor.classify_emotes(
-                    last_evaluations, max_evaluations, DIMENSIONS
+                emote_result = handle_emote_msg(
+                    last_evaluations,
+                    emote_array,
+                    emote_data,
+                    prediction_data,
                 )
-                result = handle_predictions(
-                    prediction, emote_array, emote_data, prediction_data
-                )
-                prediction_data = result[1]
-                value_list = result[0]
-                average_values = merge_lists(value_list)
-                last_evaluations.append(average_values)
-            if len(last_evaluations) > max_evaluations:
+                prediction_data = emote_result[0]
+                last_evaluations.append(emote_result[1])
+
+            if len(last_evaluations) > EVALUATIONS_FOR_REGRESSION:
                 last_evaluations.pop(0)
+
             if messages_received % 500 == 0:
                 emote_data = save_data(emote_data, prediction_data)
                 prediction_data = []
+
             elif messages_received % 900 == 0:
                 server.send(str.encode("PING tmi.twitch.tv\r\n", "utf-8"))
 

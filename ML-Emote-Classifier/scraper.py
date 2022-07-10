@@ -1,8 +1,8 @@
+import os
+import json
 import bs4
 from bs4 import BeautifulSoup
 from selenium import webdriver
-import json
-import os
 
 dictionary_format = {
     "likely emotion": "",
@@ -41,32 +41,33 @@ def save_top_emotes(emotes) -> bs4.element.ResultSet:
             and substring != ""
         ):
             formatted_emotes.append(substring)
-    if formatted_emotes != []:
-        with open("scraped-emotes.json", "w") as json_file:
+    if formatted_emotes:
+        with open("scraped-emotes.json", "w", encoding="utf8") as json_file:
             json.dump(formatted_emotes, json_file)
-    elif formatted_emotes == []:
+        print("Scraping has been successful")
+    elif not formatted_emotes:
         print("Scraping has been unsuccessful")
 
 
 def initialize_emote_dictionary():
     emote_dictionary = {}
-    with open("scraped-emotes.json", "r") as scrape_data:
+    with open("scraped-emotes.json", "r", encoding="utf8") as scrape_data:
         emote_data = json.loads(scrape_data.read())
     for emote in emote_data:
         emote_dictionary[emote] = dictionary_format
-    with open("emote-dict.json", "w") as emote_file:
+    with open("emote-dict.json", "w", encoding="utf8") as emote_file:
         json.dump(emote_dictionary, emote_file)
 
 
 def save_new_emotes():
-    with open("emote-dict.json", "r") as emote_file:
+    with open("emote-dict.json", "r", encoding="utf8") as emote_file:
         emote_dictionary = json.loads(emote_file.read())
-    with open("scraped-emotes.json", "r") as scrape_data:
+    with open("scraped-emotes.json", "r", encoding="utf8") as scrape_data:
         scraped_data = json.loads(scrape_data.read())
     for emote in scraped_data:
         if emote not in emote_dictionary:
             emote_dictionary[emote] = dictionary_format
-    with open("emote-dict.json", "w") as emote_file:
+    with open("emote-dict.json", "w", encoding="utf8") as emote_file:
         json.dump(emote_dictionary, emote_file)
 
 

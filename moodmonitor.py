@@ -71,7 +71,7 @@ emotion_data: dict = {
     "contempt": [0],
     "coercion": [0],
 }
-with open("JSON Files/emote-data.json", "r") as emote_file:
+with open("JSON-Files/emote-data.json", "r", encoding="utf8") as emote_file:
     emote_data = json.loads(emote_file.read())
 
 
@@ -99,7 +99,7 @@ st.markdown(hide_st_style, unsafe_allow_html=True)
 
 logo = st.image("https://raw.githubusercontent.com/Deerzen/Moodmonitor/main/logo.png")
 
-config_path = "JSON Files/config.json"
+config_path = "JSON-Files/config.json"
 if not os.path.exists(config_path):
     with st.form(key="credentials"):
         explanation = st.markdown(
@@ -110,7 +110,7 @@ if not os.path.exists(config_path):
         oauth = st.text_input("Twitch OAuth Token")
         if st.form_submit_button("Submit"):
             config_data = [oauth, username]
-            with open(config_path, "w") as config_file:
+            with open(config_path, "w", encoding="utf8") as config_file:
                 json.dump(config_data, config_file)
 
 else:
@@ -143,18 +143,12 @@ def ping_server() -> None:
 # Depending on the score a string is generated to make the sentiment
 # easily readable.
 def sentiment_analysis(message) -> None:
-    global sentiment_records
-    global report_interval
-
     afn = Afinn(language="en", emoticons=True)
     sentiment_records["total"] += afn.score(message)
     sentiment_records["scores"] += 1
 
 
 def emote_analysis(message) -> None:
-    global emotion_count
-    global emote_data
-
     for emotion in emote_data:
         for emote in emote_data[emotion]:
             if emote in message:
@@ -166,11 +160,6 @@ def emote_analysis(message) -> None:
 # the sentiment_records. Eventually it passes the values to display_report()
 # and calls ping_server() every third report.
 def calculate_report() -> None:
-    global sentiment_records
-    global emotion_data
-    global emotion_count
-    global report_interval
-
     # In this block the current afinn sentiment, the mean and the variance
     # are calculated.
     average = sentiment_records["total"] / sentiment_records["scores"]
@@ -223,7 +212,6 @@ def calculate_report() -> None:
 
 
 def calculate_line_chart() -> pd.core.frame.DataFrame:
-    global sentiment_data
     chart_data: dict = {
         "mean": sentiment_data["afinn mean"],
         "variance": sentiment_data["afinn variance"],
@@ -234,7 +222,6 @@ def calculate_line_chart() -> pd.core.frame.DataFrame:
 
 
 def calculate_bar_chart() -> pd.core.frame.DataFrame:
-    global emotion_data
     chart_dataframe = pd.DataFrame(data=emotion_data)
     return chart_dataframe
 
@@ -242,7 +229,6 @@ def calculate_bar_chart() -> pd.core.frame.DataFrame:
 # This function simply updates the display for the most recent report
 # with the calculated sentiment data.
 def display_report(value_dict, emotion, percentage) -> None:
-    global sentiment_data
     line1: str = (
         f"Report Nr. {str(value_dict['report number'])} ({str(value_dict['time'])}):"
     )
@@ -279,25 +265,20 @@ def take_inputs() -> None:
 
 # Simply reads the config data from a json file and returns the content.
 def read_config() -> list:
-    config_path: str = "JSON Files/config.json"
-    with open(config_path, "r") as config_file:
-        config_data = json.loads(config_file.read())
-    return config_data
+    path: str = "JSON-Files/config.json"
+    with open(path, "r", encoding="utf8") as file:
+        data = json.loads(file.read())
+    return data
 
 
 # Uses the provided data to connect to a Twitch IRC channel.
 def attempt_connection() -> None:
-    global channel
-    config_data = read_config()
+    config = read_config()
     try:
         st.session_state["server"] = socket.socket()
         st.session_state["server"].connect(("irc.chat.twitch.tv", 6667))
-        st.session_state["server"].send(
-            bytes("PASS " + config_data[0] + "\r\n", "utf-8")
-        )
-        st.session_state["server"].send(
-            bytes("NICK " + config_data[1] + "\r\n", "utf-8")
-        )
+        st.session_state["server"].send(bytes("PASS " + config[0] + "\r\n", "utf-8"))
+        st.session_state["server"].send(bytes("NICK " + config[1] + "\r\n", "utf-8"))
         st.session_state["server"].send(
             bytes("JOIN " + f"#{channel}" + "\r\n", "utf-8")
         )
@@ -305,15 +286,14 @@ def attempt_connection() -> None:
         bot_loop()
     # Error message if unsuccessful.
     except Exception as e:
-        ask_for_reset = status.error(f"Connection to {channel} failed: " + str(e))
+        error_message = status.error(f"Connection to {channel} failed: " + str(e))
 
 
 # Bot loop which receives all messages, decodes them and passes them to
 # the analsis functions. Once the amount of handled messages reaches the desired
 # threshold the emotion_report() gets called.
 def bot_loop() -> None:
-    global report_interval
-    config_data = read_config()
+    config = read_config()
     messages_since_report: int = 0
     processed_messages: int = 0
     last_messages: dict = {
@@ -321,7 +301,7 @@ def bot_loop() -> None:
     }
     ignore = ["JOIN", ":Welcome", "PING", "PONG"]
     chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
-    connection_msg = ":tmi.twitch.tv 001 " + config_data[1] + " :Welcome, GLHF!"
+    connection_msg = ":tmi.twitch.tv 001 " + config[1] + " :Welcome, GLHF!"
 
     while st.session_state["is_connected"]:
         response = st.session_state["server"].recv(1024).decode("utf-8", "ignore")

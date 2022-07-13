@@ -10,13 +10,27 @@ def linear_regression(x, y, evaluations_length) -> float:
 
     x = sm.add_constant(x)
     model = sm.OLS(y, x).fit()
-    coef = model.summary2().tables[1]["Coef."]
+    summary = model.summary2()
+    # confidence_interval = model.conf_int(alpha=0.1)
+    # print(confidence_interval.iloc[0, 0])
+    # print(confidence_interval.iloc[0, 1])
+
+    coef = summary.tables[1]["Coef."]
     prediction = round(coef[0] + coef[1] * (evaluations_length + 1), 2)
+
     if (
-        model.summary2().tables[1]["P>|t|"][0] < 0.05
-        and model.summary2().tables[1]["P>|t|"][1] < 0.05
+        summary.tables[1]["P>|t|"][0] < 0.05
+        and summary.tables[1]["P>|t|"][1] < 0.05
+        and model.rsquared >= 0.05
+        # and confidence_interval.iloc[0, 0]
+        # <= prediction
+        # <= confidence_interval.iloc[0, 1]
+        # and prediction > 0.05
+        # or prediction < -0.05
     ):
+
         return prediction
+
     else:
         return 0
 

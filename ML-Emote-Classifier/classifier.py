@@ -21,10 +21,10 @@ config_path: str = "../JSON-Files/config.json"
 with open(config_path, "r", encoding="utf8") as config_file:
     CONFIG_DATA = json.loads(config_file.read())
 DIMENSIONS = ["pleasentness", "attention", "sensitivity", "aptitude"]
-EVALUATIONS_FOR_REGRESSION = 40
+EVALUATIONS_FOR_REGRESSION = 20
 
 
-def emote_finder(message, scraped_emotes) -> list:
+def emote_finder(message, scraped_emotes, emote_data) -> list:
     """Identifies all known emotes in a message and returns them in an array.
     For identification it relies on the scraped emote data."""
 
@@ -33,7 +33,7 @@ def emote_finder(message, scraped_emotes) -> list:
 
     for emote in scraped_emotes:
         for word in message_list:
-            if emote == word and emote not in emote_list:
+            if emote == word and emote in emote_data and emote not in emote_list:
                 emote_list.append(emote)
 
     return emote_list
@@ -105,12 +105,23 @@ def handle_predictions(prediction, emote_array, emote_data, prediction_data) -> 
             prediction_data = save_prediction(emote, prediction, prediction_data)
             print(f"Emote: {emote}")
             print(f"Prediction: {prediction}")
+
         emote_values = [
             emote_dict_entry["pleasentness"] / emote_dict_entry["times tested"][0],
             emote_dict_entry["attention"] / emote_dict_entry["times tested"][1],
             emote_dict_entry["sensitivity"] / emote_dict_entry["times tested"][2],
             emote_dict_entry["aptitude"] / emote_dict_entry["times tested"][3],
         ]
+
+        # Alters emote_values proportionally so that the most dominant dimension
+        # becomes 1 or -1 respectively. This might hurt validity, but it should
+        # prevent values from approaching 0 over many repititions and rendering
+        # the linear regression useless.
+        if max(abs(i) for i in emote_values) != 0:
+            multiplicator = 1 / max(abs(i) for i in emote_values)
+            for i in range(len(emote_values)):
+                emote_values[i] = emote_values[i] * multiplicator
+
         value_list.append(emote_values)
     return [value_list, prediction_data]
 
@@ -219,9 +230,7 @@ def bot_loop(server, is_connected) -> None:
 
     chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
     messages_received = 0
-    last_evaluations = [
-        [0, 0, 0, 0],
-    ]
+    last_evaluations = []
 
     while is_connected:
         response = server.recv(1024).decode("utf-8", "ignore")
@@ -232,7 +241,7 @@ def bot_loop(server, is_connected) -> None:
             message = chat_msg.sub("", response)
             msg = message.split("\r\n")[0]
             msg = str(msg)
-            emote_array = emote_finder(msg, scraped_emotes)
+            emote_array = emote_finder(msg, scraped_emotes, emote_data)
 
             if emote_array:
                 emote_result = handle_emote_msg(

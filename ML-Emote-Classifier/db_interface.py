@@ -17,10 +17,7 @@ collection = db[COLLECTION_NAME]
 
 
 def load_json_dict():
-    with open(
-        "Moodmonitor/JSON-Files/emote-dict.json", "r", encoding="utf8"
-    ) as emote_file:
-        emote_data = json.loads(emote_file.read())
+    emote_data = data_processor.read_json("../JSON-Files/emote-dict.json")
     return emote_data
 
 

@@ -1,9 +1,11 @@
 import os
-import json
 import bs4
 from bs4 import BeautifulSoup
 from selenium import webdriver
+import data_processor
 
+SCRAPE_PATH = "../JSON-Files/scraped-emotes.json"
+DICTIONARY_PATH = "../JSON-Files/emote-dict.json"
 dictionary_format = {
     "likely emotion": "",
     "times tested": [1, 1, 1, 1],
@@ -42,8 +44,7 @@ def save_top_emotes(emotes) -> bs4.element.ResultSet:
         ):
             formatted_emotes.append(substring)
     if formatted_emotes:
-        with open("scraped-emotes.json", "w", encoding="utf8") as json_file:
-            json.dump(formatted_emotes, json_file)
+        data_processor.write_json(formatted_emotes, SCRAPE_PATH)
         print("Scraping has been successful")
     elif not formatted_emotes:
         print("Scraping has been unsuccessful")
@@ -51,30 +52,25 @@ def save_top_emotes(emotes) -> bs4.element.ResultSet:
 
 def initialize_emote_dictionary():
     emote_dictionary = {}
-    with open("scraped-emotes.json", "r", encoding="utf8") as scrape_data:
-        emote_data = json.loads(scrape_data.read())
+    emote_data = data_processor.read_json(SCRAPE_PATH)
     for emote in emote_data:
         emote_dictionary[emote] = dictionary_format
-    with open("emote-dict.json", "w", encoding="utf8") as emote_file:
-        json.dump(emote_dictionary, emote_file)
+    data_processor.write_json(emote_dictionary, DICTIONARY_PATH)
 
 
 def save_new_emotes():
-    with open("emote-dict.json", "r", encoding="utf8") as emote_file:
-        emote_dictionary = json.loads(emote_file.read())
-    with open("scraped-emotes.json", "r", encoding="utf8") as scrape_data:
-        scraped_data = json.loads(scrape_data.read())
+    emote_dictionary = data_processor.read_json(DICTIONARY_PATH)
+    scraped_data = data_processor.read_json(SCRAPE_PATH)
     for emote in scraped_data:
         if emote not in emote_dictionary:
             emote_dictionary[emote] = dictionary_format
-    with open("emote-dict.json", "w", encoding="utf8") as emote_file:
-        json.dump(emote_dictionary, emote_file)
+    data_processor.write_json(emote_dictionary, DICTIONARY_PATH)
 
 
 def execute():
     emotes = scrape_emotes()
     save_top_emotes(emotes)
-    if os.path.exists("emote-dict.json"):
+    if os.path.exists(DICTIONARY_PATH):
         save_new_emotes()
     else:
         initialize_emote_dictionary()

@@ -1,11 +1,10 @@
-import json
 import socket
 import warnings
 import traceback
 import re
 import scraper
-import interpreter
 import predictor
+import data_processor
 
 # Turning off the occasional run time warning during linear regression
 warnings.filterwarnings("ignore", category=RuntimeWarning)
@@ -17,11 +16,10 @@ print("")
 # Loading the required config data to connect to twitch chat. This must
 # have been setup by running the moodmonitor.py script before the needed information
 # can be loaded in this script.
-config_path: str = "../JSON-Files/config.json"
-with open(config_path, "r", encoding="utf8") as config_file:
-    CONFIG_DATA = json.loads(config_file.read())
+CONFIG_DATA = data_processor.read_json("../JSON-Files/config.json")
 DIMENSIONS = ["pleasentness", "attention", "sensitivity", "aptitude"]
 EVALUATIONS_FOR_REGRESSION = 20
+CHANNEL = str(input("Channel to connect to: ")).lower()
 
 
 def emote_finder(message, scraped_emotes, emote_data) -> list:
@@ -81,17 +79,6 @@ def save_prediction(emote, prediction, prediction_data) -> list:
     return collected_data
 
 
-def evaluate_dict_emotions(dictionary) -> dict:
-    """Loops through the dictionary and interprets the data for every emote.
-    Based on a table in the interpreter module it assigns the most likely emotion"""
-
-    for emote in dictionary:
-        dictionary[emote]["likely emotion"] = interpreter.identify_emotion(
-            dictionary[emote], False
-        )
-    return dictionary
-
-
 def handle_predictions(prediction, emote_array, emote_data, prediction_data) -> list:
     """For every emote in a message it passes available prediction data
     to the save_prediction function. Also it creates average values for all dimensions
@@ -126,74 +113,21 @@ def handle_predictions(prediction, emote_array, emote_data, prediction_data) -> 
     return [value_list, prediction_data]
 
 
-def integrate_predictions(emote_data, prediction_data) -> dict:
-    """Simply integrates the collected prediction data in the emote_data dictionary.
-    The mutated dictionary is returned by the function"""
-
-    dictionary = emote_data
-    data_points = [
-        "times tested",
-        "pleasentness",
-        "attention",
-        "sensitivity",
-        "aptitude",
-    ]
-
-    for emote in dictionary:
-        for prediction in prediction_data:
-            for point in data_points:
-                if emote == prediction["emote"]:
-                    if point == "times tested":
-
-                        for i in range(len(prediction[point])):
-                            dictionary[emote][point][i] = round(
-                                dictionary[emote][point][i] + prediction[point][i], 2
-                            )
-
-                    else:
-                        dictionary[emote][point] = round(
-                            dictionary[emote][point] + prediction[point], 2
-                        )
-    return dictionary
-
-
-def save_data(emote_data, prediction_data) -> list:
-    """Integrates the collected data in the emote_data and saves it to the json file"""
-
-    with open("emote-dict.json", "r", encoding="utf8") as json_file:
-        json_data = json.loads(json_file.read())
-
-    new_dict = integrate_predictions(json_data, prediction_data)
-    new_dict = evaluate_dict_emotions(new_dict)
-
-    with open("emote-dict.json", "w", encoding="utf8") as emote_dict:
-        json.dump(new_dict, emote_dict)
-        print("------ DATA SAVED ------")
-        print("")
-
-    with open("emote-dict.json", "r", encoding="utf8") as emote_dict:
-        emote_data = json.loads(emote_dict.read())
-
-    return emote_data
-
-
 def attempt_connection() -> None:
     """Tries to establish a connection to the desired twitch chat. If successful it
     calls the main loop"""
 
-    channel = str(input("Channel to connect to: ")).lower()
-    print("")
     try:
         server = socket.socket()
         server.connect(("irc.chat.twitch.tv", 6667))
         server.send(bytes("PASS " + CONFIG_DATA[0] + "\r\n", "utf-8"))
         server.send(bytes("NICK " + CONFIG_DATA[1] + "\r\n", "utf-8"))
-        server.send(bytes("JOIN " + f"#{channel}" + "\r\n", "utf-8"))
+        server.send(bytes("JOIN " + f"#{CHANNEL}" + "\r\n", "utf-8"))
         is_connected = True
         bot_loop(server, is_connected)
     # Error message if unsuccessful.
     except Exception as error:
-        error_message = f"Connection to {channel} failed: " + str(error)
+        error_message = f"Connection to {CHANNEL} failed: " + str(error)
         print(error_message)
         traceback.print_exc()
 
@@ -221,11 +155,9 @@ def bot_loop(server, is_connected) -> None:
     # Loading the scraped emote data from stream elements and the json file containing
     # the collected information on emotes. The scraper script must have been
     # executed once before this script can load the required files.
-    with open("scraped-emotes.json", "r", encoding="utf8") as scrape_file:
-        scraped_emotes = json.loads(scrape_file.read())
-    with open("emote-dict.json", "r", encoding="utf8") as emote_file:
-        emote_data = json.loads(emote_file.read())
-    emote_data = evaluate_dict_emotions(emote_data)
+    scraped_emotes = data_processor.read_json("../JSON-Files/scraped-emotes.json")
+    emote_data = data_processor.read_json("../JSON-Files/emote-dict.json")
+    emote_data = data_processor.evaluate_dict_emotions(emote_data)
     prediction_data = []
 
     chat_msg = re.compile(r"^:\w+!\w+@\w+\.tmi\.twitch\.tv PRIVMSG #\w+ :")
@@ -257,7 +189,7 @@ def bot_loop(server, is_connected) -> None:
                 last_evaluations.pop(0)
 
             if messages_received % 500 == 0:
-                emote_data = save_data(emote_data, prediction_data)
+                emote_data = data_processor.save_data(emote_data, prediction_data)
                 prediction_data = []
 
             elif messages_received % 900 == 0:

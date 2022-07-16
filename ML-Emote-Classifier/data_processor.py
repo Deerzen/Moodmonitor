@@ -1,8 +1,23 @@
 """The JSON module is needed to read from and write to JSON files.
 The imported inerpreter module helps to classify all emotions based
 on the collected data"""
+import time
 import json
+from pymongo import MongoClient
 import interpreter
+
+with open("../JSON-Files/config.json", "r", encoding="utf8") as config_file:
+    CONFIG = json.loads(config_file.read())
+USER_NAME: str = CONFIG[2][0]
+PASSWORD: str = CONFIG[2][1]
+CLUSTER_NAME: str = CONFIG[2][2]
+COLLECTION_NAME: str = CONFIG[2][3]
+
+cluster = MongoClient(
+    f"mongodb+srv://{USER_NAME}:{PASSWORD}@cluster0.qf4tn6b.mongodb.net/?retryWrites=true&w=majority"
+)
+db = cluster[CLUSTER_NAME]
+collection = db[COLLECTION_NAME]
 
 
 def read_json(path):
@@ -18,6 +33,25 @@ def write_json(data, path) -> None:
 
     with open(path, "w", encoding="utf8") as json_file:
         json.dump(data, json_file)
+
+
+def load_json_dict():
+    emote_data = read_json("../JSON-Files/emote-dict.json")
+    return emote_data
+
+
+def upload(dataset):
+    index = collection.count_documents({})
+    local_time = time.ctime(time.time())
+    post = {"_id": index, "time": local_time, "data": dataset}
+    collection.insert_one(post)
+    print(f"{local_time}: Data uploaded successfully")
+
+
+def download_latest_post() -> dict:
+    last_index = collection.count_documents({}) - 1
+    results = collection.find_one({"_id": last_index})
+    return results["data"]
 
 
 def evaluate_dict_emotions(dictionary) -> dict:
@@ -62,8 +96,8 @@ def integrate_predictions(emote_data, prediction_data) -> dict:
     return dictionary
 
 
-def save_data(emote_data, prediction_data) -> list:
-    """Integrates the collected data in the emote_data and saves it to the json file"""
+def local_save(emote_data, prediction_data) -> dict:
+    """Saving the data locally in a JSON file"""
 
     path_dict = "../JSON-Files/emote-dict.json"
     json_data = read_json(path_dict)
@@ -77,3 +111,27 @@ def save_data(emote_data, prediction_data) -> list:
     emote_data = read_json(path_dict)
 
     return emote_data
+
+
+def database_save(emote_data, prediction_data) -> dict:
+    """saving the database in a mongodb collection"""
+
+    db_data = download_latest_post()
+    new_dict = integrate_predictions(db_data, prediction_data)
+    new_dict = evaluate_dict_emotions(new_dict)
+    upload(new_dict)
+
+    emote_data = download_latest_post()
+    return emote_data
+
+
+def save_data(emote_data, prediction_data, method) -> dict:
+    """Integrates the collected data in the emote_data and saves it to the json file"""
+
+    if method == "local":
+        return local_save(emote_data, prediction_data)
+    elif method == "database":
+        return database_save(emote_data, prediction_data)
+
+
+# upload(read_json("../JSON-Files/emote-dict.json"))

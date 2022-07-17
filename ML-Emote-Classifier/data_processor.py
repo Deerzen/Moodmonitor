@@ -1,6 +1,7 @@
 """The JSON module is needed to read from and write to JSON files.
 The imported inerpreter module helps to classify all emotions based
 on the collected data"""
+
 import time
 import json
 from pymongo import MongoClient
@@ -134,4 +135,5 @@ def save_data(emote_data, prediction_data, method) -> dict:
         return database_save(emote_data, prediction_data)
 
 
-# upload(read_json("../JSON-Files/emote-dict.json"))
+upload(read_json("../JSON-Files/emote-dict.json"))
+# write_json(download_latest_post(), "../JSON-Files/emote-dict.json")

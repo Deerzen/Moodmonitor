@@ -46,9 +46,12 @@
  The moodmonitor.py script accesses two files in the "JSON Files" folder.
  One stores the supplied OAuth Token and username. It will be created when you use
  the application for the first time. The other one contains the
- needed data for the emotion analysis in a JSON File.
+ needed data for the emotion analysis in a JSON File. In the ML-Emote-Classifier folder
+ I have provided optional scripts that might help with categorizing emotes on
+ a regular basis.
 
-## 🚩 Problems regarding validity
+
+## 🚩 Current problems regarding validity
  Since all emotes have been categorized by myself in 2020 there may be problems 
  regarding the validity of the generated emotion reports. The meaning of Twitch
  emotes may be ambiguous, it most likely changes over time and different contexts
@@ -60,6 +63,20 @@
  However, a machine learning algorithm may be capable of addressing
  these problems in the future. Alternatively, regular surveys of Twitch users
  could also be a worthwhile approach to solving these problems.
+
+
+ ## 🤖 Optional machine learning scripts for categorization
+To tackle the problem of not being able to categorize every emote regularly
+I have provided optional scripts that should be able to do so. Based on supplied
+training data they classify emotes on the four dimensions of pleasentness, attention,
+sensitivity and aptitude over and over again. To predict the most likely value
+for every dimension it uses linear regression. The results are saved locally
+or in your own MongoDB collection provided they are statistically significant.
+Based on the collected values the scripts categorize each emote
+in the best fitting secondary emotion. The script automatically connects
+to the most viewed twitch channels and runs each classifing operation in a seperate
+process. Moodmonitor still needs to be updated to automatically use the generated data.  
+
 
 ## 🛫 How to start analyzing with Moodmonitor
 1. Simply clone this repository, install requirements and run the script locally.

@@ -57,7 +57,6 @@ def format_top_channels(channels):
     for channel in channels:
         if "title=" in str(channel):
             text = str(channel)
-            print(text)
             start = text.index('title="') + 7
             end = text.index('">')
             substring = text[start:end]

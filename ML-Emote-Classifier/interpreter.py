@@ -18,10 +18,8 @@ def identify_emotion(emote, is_printing) -> str:
     ]
     hierarchy = [0, 0, 0, 0]
     for i in range(len(values)):
-        if values[i] < 0:
-            hierarchy[i] = values[i] * -1
-        else:
-            hierarchy[i] = values[i]
+        hierarchy[i] = abs(values[i])
+
     evaluation = [
         round(emote["pleasentness"] / emote["times tested"][0], 2),
         round(emote["attention"] / emote["times tested"][1], 2),

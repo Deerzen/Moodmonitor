@@ -4,6 +4,9 @@ for convenience and readability"""
 import os
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import data_processor
 
 SCRAPE_PATH = "../JSON-Files/scraped-emotes.json"
@@ -18,6 +21,22 @@ dictionary_format = {
 }
 
 
+def find_top_channels():
+    os.environ["MOZ_HEADLESS"] = "1"
+    driver = webdriver.Firefox()
+    driver.get("https://www.twitch.tv/directory/all?sort=VIEWER_COUNT")
+    WebDriverWait(driver=driver, timeout=5).until(
+        EC.presence_of_element_located(
+            (By.CSS_SELECTOR, "p[data-a-target=preview-card-channel-link]")
+        )
+    )
+    soup = BeautifulSoup(driver.page_source, "lxml")
+    channels = soup.find_all("p", attrs={"class": "CoreText-sc-cpl358-0 eyuUlK"})
+    driver.quit()
+
+    return channels
+
+
 def scrape_emotes():
     """Visits stats.streamelements.com headless with selenium, reads the site
     with beautiful soup and returns found emotes"""
@@ -30,6 +49,21 @@ def scrape_emotes():
     driver.quit()
 
     return emotes
+
+
+def format_top_channels(channels):
+    formatted_channels = []
+
+    for channel in channels:
+        if "title=" in str(channel):
+            text = str(channel)
+            print(text)
+            start = text.index('title="') + 7
+            end = text.index('">')
+            substring = text[start:end]
+            formatted_channels.append(substring)
+
+    return formatted_channels
 
 
 def save_top_emotes(emotes) -> None:

@@ -50,7 +50,7 @@ def merge_lists(lists) -> list:
     return merged_list
 
 
-def save_prediction(emote, prediction, prediction_data) -> list:
+def archive_prediction(emote, prediction, prediction_data) -> list:
     """Formats the collected prediction data for a particular emote in a message
     and returns a dictionary object that will be added to the prediction_data list."""
 
@@ -78,7 +78,7 @@ def save_prediction(emote, prediction, prediction_data) -> list:
 
 def handle_predictions(prediction, emote_array, emote_data, prediction_data) -> list:
     """For every emote in a message it passes available prediction data
-    to the save_prediction function. Also it creates average values for all dimensions
+    to the archive_prediction function. Also it creates average values for all dimensions
     based on the emote_data dictionary. It returns the mutated prediction_data and
     the calculated average values"""
 
@@ -86,7 +86,7 @@ def handle_predictions(prediction, emote_array, emote_data, prediction_data) -> 
     for emote in emote_array:
         emote_dict_entry = emote_data[emote]
         if prediction != [0, 0, 0, 0]:
-            prediction_data = save_prediction(emote, prediction, prediction_data)
+            prediction_data = archive_prediction(emote, prediction, prediction_data)
             print(f"Emote: {emote}")
             print(f"Prediction: {prediction}")
 
@@ -122,7 +122,7 @@ def attempt_connection(channel, method) -> None:
         server.send(bytes("JOIN " + f"#{channel}" + "\r\n", "utf-8"))
         is_connected = True
         print(f"Successfully connected to {channel}")
-        bot_loop(server, is_connected, method)
+        bot_loop(server, is_connected, method, channel)
     # Error message if unsuccessful.
     except ConnectionAbortedError as error:
         error_message = f"Connection to {channel} failed: " + str(error)
@@ -147,7 +147,7 @@ def handle_emote_msg(
     return [result[1], average_values]
 
 
-def bot_loop(server, is_connected, method) -> None:
+def bot_loop(server, is_connected, method, channel) -> None:
     """Main function which is in a loop as long as the connection to twitch chat
     persists. Every message is decoded & processed in other functions
     based on the contents."""
@@ -202,14 +202,14 @@ def bot_loop(server, is_connected, method) -> None:
             if len(last_evaluations) > EVALUATIONS_FOR_REGRESSION:
                 last_evaluations.pop(0)
 
-            if messages_received % 2000 == 0:
-                if len(prediction_data) < 10:
-                    is_connected = False
-                else:
-                    emote_data = data_processor.save_data(
-                        emote_data, prediction_data, method
-                    )
-                    prediction_data = []
+            if messages_received % 500 == 0:
+                # if len(prediction_data) < 5:
+                #    print(f"Disconnected from {channel} due to lack of data")
+                #    is_connected = False
+                emote_data = data_processor.save_data(
+                    emote_data, prediction_data, method
+                )
+                prediction_data = []
 
             elif messages_received % 900 == 0:
                 server.send(str.encode("PING tmi.twitch.tv\r\n", "utf-8"))

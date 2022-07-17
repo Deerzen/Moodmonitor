@@ -4,24 +4,24 @@ Classifier is the module that is being called."""
 from multiprocessing import Pool, freeze_support
 from itertools import repeat
 import classifier
+import scraper
+
+
+def clamp(n, smallest, largest):
+    """Limits n to the range from smallest to largest"""
+
+    return max(smallest, min(n, largest))
 
 
 def connect(method):
     """Calls the classifier module for every specified channel
     and initiates a connection"""
 
-    channels = [
-        "xqc",
-        "forsen",
-        "mizkif",
-        "hasanabi",
-        "sodapoppin",
-        "asmongold",
-        "shroud",
-        "pokimane",
-        "summit1g",
-        "loltyler1",
-    ]
+    selection = clamp(
+        int(input("How many channels do you want to connect to (30 max): ")), 1, 30
+    )
+    print("Looking up current top channels...")
+    channels = scraper.format_top_channels(scraper.find_top_channels())[:selection]
 
     with Pool() as pool:
         pool.starmap(classifier.attempt_connection, zip(channels, repeat(method)))

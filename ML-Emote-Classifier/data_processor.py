@@ -135,5 +135,5 @@ def save_data(emote_data, prediction_data, method) -> dict:
         return database_save(emote_data, prediction_data)
 
 
-upload(read_json("../JSON-Files/emote-dict.json"))
+# upload(read_json("../JSON-Files/emote-dict.json"))
 # write_json(download_latest_post(), "../JSON-Files/emote-dict.json")

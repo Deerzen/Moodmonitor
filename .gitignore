@@ -1,7 +1,4 @@
 JSON-Files/config.json
-JSON-Files/data.json
-JSON-Files/emote-dict.json
-JSON-Files/scraped-emotes.json
 ML-Emote-Classifier/geckodriver.log
 ML-Emote-Classifier/geckodriver.exe
 ML-Emote-Classifier/geckodriver.txt

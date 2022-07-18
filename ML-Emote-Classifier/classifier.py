@@ -203,9 +203,6 @@ def bot_loop(server, is_connected, method, channel) -> None:
                 last_evaluations.pop(0)
 
             if messages_received % 500 == 0:
-                # if len(prediction_data) < 5:
-                #    print(f"Disconnected from {channel} due to lack of data")
-                #    is_connected = False
                 emote_data = data_processor.save_data(
                     emote_data, prediction_data, method
                 )

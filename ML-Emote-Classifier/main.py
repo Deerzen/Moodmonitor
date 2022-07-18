@@ -2,7 +2,7 @@
 Classifier is the module that is being called."""
 
 import time
-import multiprocessing
+from multiprocessing import Pool
 from itertools import repeat
 import classifier
 import scraper
@@ -15,15 +15,18 @@ def clamp(n, smallest, largest):
 
 
 def run_pool(method, selection):
+
     print("Looking up current top channels...")
     channels = scraper.format_top_channels(scraper.find_top_channels())[:selection]
 
-    with multiprocessing.Pool() as pool:
-        pool.starmap(classifier.attempt_connection, zip(channels, repeat(method)))
+    pool = Pool(processes=selection)
+    pool.starmap_async(classifier.attempt_connection, zip(channels, repeat(method)))
 
+    time.sleep(1800)
     pool.close()
     pool.terminate()
     pool.join()
+    print("pool ended")
 
 
 def connect(method):
@@ -35,15 +38,11 @@ def connect(method):
     )
 
     while True:
-        process = multiprocessing.Process(target=run_pool, args=[method, selection])
-        process.start()
-        time.sleep(1800)
-        process.terminate()
-        process.join()
+        run_pool(method, selection)
+        time.sleep(30)
 
 
 if __name__ == "__main__":
-    multiprocessing.freeze_support()
     connect(
         str(input("Which save method do you want to use [local/database]: ")).lower()
     )

@@ -25,7 +25,7 @@ def find_top_channels():
     os.environ["MOZ_HEADLESS"] = "1"
     driver = webdriver.Firefox()
     driver.get("https://www.twitch.tv/directory/all?sort=VIEWER_COUNT")
-    WebDriverWait(driver=driver, timeout=5).until(
+    WebDriverWait(driver=driver, timeout=20).until(
         EC.presence_of_element_located(
             (By.CSS_SELECTOR, "p[data-a-target=preview-card-channel-link]")
         )

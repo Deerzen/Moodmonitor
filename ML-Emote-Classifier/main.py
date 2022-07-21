@@ -1,7 +1,9 @@
 """Multiprocessing and Itertools are both used to connect to multiple channels.
 Classifier is the module that is being called."""
 
+import os
 import time
+from multiprocessing import freeze_support
 from multiprocessing import Pool
 from itertools import repeat
 import classifier
@@ -26,23 +28,23 @@ def run_pool(method, selection):
     pool.close()
     pool.terminate()
     pool.join()
-    print("pool ended")
+    print("pool terminated")
 
 
 def connect(method):
     """Calls the classifier module for every specified channel
     and initiates a connection"""
 
-    selection = clamp(
-        int(input("How many channels do you want to connect to (30 max): ")), 1, 30
-    )
-
     while True:
-        run_pool(method, selection)
-        time.sleep(30)
+        try:
+            run_pool(method, max(os.cpu_count() // 2, 1))
+            time.sleep(30)
+        except:
+            print("error")
 
 
 if __name__ == "__main__":
+    freeze_support()
     connect(
         str(input("Which save method do you want to use [local/database]: ")).lower()
     )

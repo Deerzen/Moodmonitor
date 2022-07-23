@@ -41,6 +41,11 @@
  second-level emotions more accurately seems like a costlier but superior approach
  (cf. Cambria, Livingstone, Hussain 2011: 151-152).
 
+ Future versions of Moodmonitor will use the revisited version of
+ the "Hourglass of Emotions" as a theoretical basis for emote classification
+ (cf. Susanto et al. 2020: 97-100). Unlike the monitor the emote classifier scripts
+ already use the improved model and the altered emotion dimensions.
+
 
 ## 📂 Explanation of the project structure
  The moodmonitor.py script accesses two files in the "JSON Files" folder.
@@ -107,3 +112,6 @@ streamlit run moodmonitor.py
 
  StreamElements (2021): "StreamElements Chat Stats - Recording dank memes from
  Twitch Chat since, January 9th 2016". URL: https://stats.streamelements.com/c/global
+
+ Susanto, Yospehine; Livingstone, Andrew G.; Ng, Bee Chin; Cambira Erik (2020):
+ "The Hourglass Model Revisited". In: IEEE Intelligent Systems, 35.5, p. 96-102.

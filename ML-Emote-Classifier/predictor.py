@@ -21,7 +21,7 @@ def linear_regression(x, y, evaluations_length) -> float:
     if (
         summary.tables[1]["P>|t|"][0] < 0.05
         and summary.tables[1]["P>|t|"][1] < 0.05
-        and model.rsquared >= 0.05
+        and model.rsquared >= 0.2
         # and confidence_interval.iloc[0, 0]
         # <= prediction
         # <= confidence_interval.iloc[0, 1]
@@ -36,7 +36,7 @@ def linear_regression(x, y, evaluations_length) -> float:
 
 
 def create_dataset(last_evaluations, dimensions):
-    formated_evaluations = {"pl": [], "at": [], "se": [], "ap": []}
+    formated_evaluations = {"in": [], "te": [], "se": [], "at": []}
 
     # Essentially adds the index numbers of the last evaluations to an array
     # and the values to the respective key in the formated_evaluations dictionary.
@@ -44,20 +44,20 @@ def create_dataset(last_evaluations, dimensions):
     for i in range(len(last_evaluations)):
         evaluation_numbers.append(i)
     for evaluation in last_evaluations:
-        formated_evaluations["pl"].append(evaluation[0])
-        formated_evaluations["at"].append(evaluation[1])
+        formated_evaluations["in"].append(evaluation[0])
+        formated_evaluations["te"].append(evaluation[1])
         formated_evaluations["se"].append(evaluation[2])
-        formated_evaluations["ap"].append(evaluation[3])
+        formated_evaluations["at"].append(evaluation[3])
 
     # The formatted data can now be transformed in a pandas dataframe for the
     # linear regression.
     df = pd.DataFrame(
         {
             "numbers": evaluation_numbers,
-            dimensions[0]: formated_evaluations["pl"],
-            dimensions[1]: formated_evaluations["at"],
+            dimensions[0]: formated_evaluations["in"],
+            dimensions[1]: formated_evaluations["te"],
             dimensions[2]: formated_evaluations["se"],
-            dimensions[3]: formated_evaluations["ap"],
+            dimensions[3]: formated_evaluations["at"],
         }
     )
     return df
@@ -65,7 +65,7 @@ def create_dataset(last_evaluations, dimensions):
 
 def classify_emotes(last_evaluations, needed_evaluations, dimensions) -> list:
     """Classifies the identified emotes using the four dimensions
-    pleasentness, attention, sensitivity and aptitude and returns the predicted
+    introspection, temper, sensitivity and attitude and returns the predicted
     float values for all four dimensions in an array."""
 
     df = create_dataset(last_evaluations, dimensions)

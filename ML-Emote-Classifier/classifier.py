@@ -15,7 +15,7 @@ import data_processor
 # have been setup by running the moodmonitor.py script before the needed information
 # can be loaded in this script.
 CONFIG_DATA = data_processor.read_json("../JSON-Files/config.json")
-DIMENSIONS = ["pleasentness", "attention", "sensitivity", "aptitude"]
+DIMENSIONS = ["introspection", "temper", "sensitivity", "attitude"]
 EVALUATIONS_FOR_REGRESSION = 20
 
 
@@ -35,7 +35,7 @@ def emote_finder(message, scraped_emotes, emote_data) -> list:
 
 
 def merge_lists(lists) -> list:
-    """Takes a list with pleasentness, attention, sensitivity and aptitude
+    """Takes a list with introspection, temper, sensitivity and attitude
     data, calculates the average for each dimenension and returns a merged list."""
 
     merged_list = [0, 0, 0, 0]
@@ -58,10 +58,10 @@ def archive_prediction(emote, prediction, prediction_data) -> list:
     result: dict = {
         "emote": "",
         "times tested": [0, 0, 0, 0],
-        "pleasentness": 0,
-        "attention": 0,
+        "introspection": 0,
+        "temper": 0,
         "sensitivity": 0,
-        "aptitude": 0,
+        "attitude": 0,
     }
     result["emote"] = emote
 
@@ -91,10 +91,10 @@ def handle_predictions(prediction, emote_array, emote_data, prediction_data) -> 
             print(f"Prediction: {prediction}")
 
         emote_values = [
-            emote_dict_entry["pleasentness"] / emote_dict_entry["times tested"][0],
-            emote_dict_entry["attention"] / emote_dict_entry["times tested"][1],
+            emote_dict_entry["introspection"] / emote_dict_entry["times tested"][0],
+            emote_dict_entry["temper"] / emote_dict_entry["times tested"][1],
             emote_dict_entry["sensitivity"] / emote_dict_entry["times tested"][2],
-            emote_dict_entry["aptitude"] / emote_dict_entry["times tested"][3],
+            emote_dict_entry["attitude"] / emote_dict_entry["times tested"][3],
         ]
 
         # Alters emote_values proportionally so that the most dominant dimension

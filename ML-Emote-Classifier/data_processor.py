@@ -60,7 +60,7 @@ def evaluate_dict_emotions(dictionary) -> dict:
     Based on a table in the interpreter module it assigns the most likely emotion"""
 
     for emote in dictionary:
-        dictionary[emote]["likely emotion"] = interpreter.identify_emotion(
+        dictionary[emote]["emotions"] = interpreter.identify_emotion(
             dictionary[emote], False
         )
     return dictionary

@@ -19,7 +19,8 @@ def clamp(n, smallest, largest):
 def run_pool(method, selection):
 
     print("Looking up current top channels...")
-    channels = scraper.format_top_channels(scraper.find_top_channels())[:selection]
+    # channels = scraper.format_top_channels(scraper.find_top_channels())[:selection]
+    channels = ["xqc", "forsen", "sodapoppin", "hasanabi"]
 
     pool = Pool(processes=selection)
     pool.starmap_async(classifier.attempt_connection, zip(channels, repeat(method)))

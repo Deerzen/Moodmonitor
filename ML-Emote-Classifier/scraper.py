@@ -12,12 +12,12 @@ import data_processor
 SCRAPE_PATH = "../JSON-Files/scraped-emotes.json"
 DICTIONARY_PATH = "../JSON-Files/emote-dict.json"
 dictionary_format = {
-    "likely emotion": "",
+    "emotions": ["", "", "", ""],
     "times tested": [1, 1, 1, 1],
-    "pleasentness": 0,
-    "attention": 0,
+    "introspection": 0,
+    "temper": 0,
     "sensitivity": 0,
-    "aptitude": 0,
+    "attitude": 0,
 }
 
 

@@ -10,17 +10,17 @@ import classifier
 import scraper
 
 
-def clamp(n, smallest, largest):
+def clamp(number, smallest, largest):
     """Limits n to the range from smallest to largest"""
 
-    return max(smallest, min(n, largest))
+    return max(smallest, min(number, largest))
 
 
 def run_pool(method, selection):
+    """Runs a number of processes which each connect to a different channel"""
 
     print("Looking up current top channels...")
-    # channels = scraper.format_top_channels(scraper.find_top_channels())[:selection]
-    channels = ["xqc", "forsen", "sodapoppin", "hasanabi"]
+    channels = scraper.format_top_channels(scraper.find_top_channels())[:selection]
 
     pool = Pool(processes=selection)
     pool.starmap_async(classifier.attempt_connection, zip(channels, repeat(method)))
@@ -39,7 +39,7 @@ def connect(method):
     while True:
         try:
             run_pool(method, max(os.cpu_count() // 2, 1))
-            time.sleep(30)
+            time.sleep(20)
         except:
             print("error")
 

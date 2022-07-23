@@ -5,7 +5,6 @@ on the collected data"""
 import time
 import json
 from pymongo import MongoClient
-import interpreter
 
 with open("../JSON-Files/config.json", "r", encoding="utf8") as config_file:
     CONFIG = json.loads(config_file.read())
@@ -55,14 +54,43 @@ def download_latest_post() -> dict:
     return results["data"]
 
 
+def identify_emotion(emote) -> list:
+    """Returns the respective emotion for each dimension based on the recorded values."""
+
+    # This table contains the emotions for each dimension going from very positive (1)
+    # to very negative (-1).
+    emotion_table: list = [
+        ["ecstasy", "joy", "contentment", "melancholy", "sadness", "grief"],
+        ["bliss", "calmness", "serenity", "annoyance", "anger", "rage"],
+        ["enthusiasm", "eagerness", "responsiveness", "anxiety", "fear", "terror"],
+        ["delight", "pleasentness", "acceptance", "dislkike", "disgust", "loathing"],
+    ]
+    emotions = []
+    evaluation = [
+        round(emote["introspection"] / emote["times tested"][0], 2),
+        round(emote["temper"] / emote["times tested"][1], 2),
+        round(emote["sensitivity"] / emote["times tested"][2], 2),
+        round(emote["attitude"] / emote["times tested"][3], 2),
+    ]
+
+    index = 0
+    for value in evaluation:
+        combinations = {0: 0.66, 1: 0.33, 2: 0, 3: -0.33, 4: -0.66, 5: -2000}
+        for key, threshold in combinations.items():
+            if value >= threshold:
+                emotions.append(emotion_table[index][key])
+                index += 1
+                break
+
+    return emotions
+
+
 def evaluate_dict_emotions(dictionary) -> dict:
     """Loops through the dictionary and interprets the data for every emote.
     Based on a table in the interpreter module it assigns the most likely emotion"""
 
     for emote in dictionary:
-        dictionary[emote]["emotions"] = interpreter.identify_emotion(
-            dictionary[emote], False
-        )
+        dictionary[emote]["emotions"] = identify_emotion(dictionary[emote])
     return dictionary
 
 
@@ -73,10 +101,10 @@ def integrate_predictions(emote_data, prediction_data) -> dict:
     dictionary = emote_data
     data_points = [
         "times tested",
-        "pleasentness",
-        "attention",
+        "introspection",
+        "temper",
         "sensitivity",
-        "aptitude",
+        "attitude",
     ]
 
     for emote in dictionary:

@@ -39,13 +39,11 @@ def merge_lists(lists) -> list:
     data, calculates the average for each dimenension and returns a merged list."""
 
     merged_list = [0, 0, 0, 0]
-
     for array in lists:
-        for i in range(len(array)):
-            merged_list[i] += array[i]
-
-    for i in range(len(merged_list)):
-        merged_list[i] = merged_list[i] / len(lists)
+        for index, value in enumerate(array):
+            merged_list[index] += value
+    for index, value in enumerate(merged_list):
+        merged_list[index] = value / len(lists)
 
     return merged_list
 
@@ -76,7 +74,16 @@ def archive_prediction(emote, prediction, prediction_data) -> list:
     return collected_data
 
 
-def handle_predictions(prediction, emote_array, emote_data, prediction_data) -> list:
+def print_report(channel, emote, prediction):
+    print(f"-- Channel: {channel} --")
+    print(f"Emote: {emote}")
+    print(f"Prediction: {prediction}")
+    print("")
+
+
+def handle_predictions(
+    prediction, emote_array, emote_data, prediction_data, channel
+) -> list:
     """For every emote in a message it passes available prediction data
     to the archive_prediction function. Also it creates average values for all dimensions
     based on the emote_data dictionary. It returns the mutated prediction_data and
@@ -87,8 +94,7 @@ def handle_predictions(prediction, emote_array, emote_data, prediction_data) -> 
         emote_dict_entry = emote_data[emote]
         if prediction != [0, 0, 0, 0]:
             prediction_data = archive_prediction(emote, prediction, prediction_data)
-            print(f"Emote: {emote}")
-            print(f"Prediction: {prediction}")
+            print_report(channel, emote, prediction)
 
         emote_values = [
             emote_dict_entry["introspection"] / emote_dict_entry["times tested"][0],
@@ -131,7 +137,7 @@ def attempt_connection(channel, method) -> None:
 
 
 def handle_emote_msg(
-    last_evaluations, emote_array, emote_data, prediction_data
+    last_evaluations, emote_array, emote_data, prediction_data, channel
 ) -> list:
     """This function calls other functions to create a prediction, process it
     and to return average values for every dimension that will be used for future
@@ -140,7 +146,9 @@ def handle_emote_msg(
     prediction = predictor.classify_emotes(
         last_evaluations, EVALUATIONS_FOR_REGRESSION, DIMENSIONS
     )
-    result = handle_predictions(prediction, emote_array, emote_data, prediction_data)
+    result = handle_predictions(
+        prediction, emote_array, emote_data, prediction_data, channel
+    )
     average_values = merge_lists(result[0])
 
     # returns prediction data and average values for all dimensions
@@ -191,10 +199,7 @@ def bot_loop(server, is_connected, method, channel) -> None:
 
             if emote_array:
                 emote_result = handle_emote_msg(
-                    last_evaluations,
-                    emote_array,
-                    emote_data,
-                    prediction_data,
+                    last_evaluations, emote_array, emote_data, prediction_data, channel
                 )
                 prediction_data = emote_result[0]
                 last_evaluations.append(emote_result[1])
@@ -203,6 +208,9 @@ def bot_loop(server, is_connected, method, channel) -> None:
                 last_evaluations.pop(0)
 
             if messages_received % 500 == 0:
+                if not prediction_data:
+                    print(f"Disconnected from {channel}: insufficient data")
+                    is_connected = False
                 emote_data = data_processor.save_data(
                     emote_data, prediction_data, method
                 )

@@ -212,7 +212,7 @@ def bot_loop(server, is_connected, method, channel) -> None:
                     print(f"Disconnected from {channel}: insufficient data")
                     is_connected = False
                 emote_data = data_processor.save_data(
-                    emote_data, prediction_data, method
+                    emote_data, prediction_data, method, channel
                 )
                 prediction_data = []
 

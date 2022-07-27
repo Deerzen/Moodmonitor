@@ -2,11 +2,9 @@
 for convenience and readability"""
 
 import os
+import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import data_processor
 
 SCRAPE_PATH = "../JSON-Files/scraped-emotes.json"
@@ -22,18 +20,33 @@ dictionary_format = {
 
 
 def find_top_channels():
-    os.environ["MOZ_HEADLESS"] = "1"
-    driver = webdriver.Firefox()
-    driver.get("https://www.twitch.tv/directory/all?sort=VIEWER_COUNT")
-    WebDriverWait(driver=driver, timeout=20).until(
-        EC.presence_of_element_located(
-            (By.CSS_SELECTOR, "p[data-a-target=preview-card-channel-link]")
-        )
-    )
-    soup = BeautifulSoup(driver.page_source, "lxml")
-    channels = soup.find_all("p", attrs={"class": "CoreText-sc-cpl358-0 eyuUlK"})
-    driver.quit()
+    url = "https://gql.twitch.tv/gql#origin=twilight"
 
+    payload = '[{"operationName":"BrowsePage_Popular","variables":{"imageWidth":50,"limit":30,"platformType":"all","options":{"sort":"VIEWER_COUNT","freeformTags":null,"tags":[],"recommendationsContext":{"platform":"web"},"requestID":"JIRA-VXP-2397"},"sortTypeIsRecency":false,"freeformTagsEnabled":false},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"267d2d2a64e0a0d6206c039ea9948d14a9b300a927d52b2efc52d2486ff0ec65"}}},{"operationName":"PersonalSections","variables":{"input":{"sectionInputs":["RECOMMENDED_SECTION"],"recommendationContext":{"platform":"web","clientApp":"twilight","location":"directory.popular","referrerDomain":"www.twitch.tv","viewportHeight":927,"viewportWidth":906,"channelID":null,"channelLanguage":null,"categoryID":null,"channelUptime":null,"lastChannelID":null,"lastCategoryID":null,"pageviewContent":null,"pageviewContentType":null,"pageviewLocation":"directory.popular","pageviewMedium":null,"previousPageviewContent":null,"previousPageviewContentType":null,"previousPageviewLocation":"directory.popular","previousPageviewMedium":null}},"creatorAnniversariesExperimentEnabled":false,"sideNavActiveGiftExperimentEnabled":false},"extensions":{"persistedQuery":{"version":1,"sha256Hash":"469b047f12eef51d67d3007b7c908cf002c674825969b4fa1c71c7e4d7f1bbfb"}}}]'
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:102.0) Gecko/20100101 Firefox/102.0",
+        "Accept": "*/*",
+        "Accept-Language": "en-US",
+        "Accept-Encoding": "gzip, deflate, br",
+        "Client-Id": "kimne78kx3ncx6brgo4mv6wki5h1ko",
+        "X-Device-Id": "5J6ImxCfnsiaqjhXzJKC4gtgXS3yoYt0",
+        "Client-Version": "9efb637d-cf23-4752-b716-b8a1f71f2bbc",
+        "Client-Session-Id": "5390e5ca4a39fdd3",
+        "Content-Type": "text/plain;charset=UTF-8",
+        "Origin": "https://www.twitch.tv",
+        "DNT": "1",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-site",
+    }
+
+    response = requests.request("POST", url, data=payload, headers=headers)
+
+    channels = []
+    dictionaries = response.json()[0]["data"]["streams"]["edges"]
+    for dictionary in dictionaries:
+        channels.append(str(dictionary["node"]["broadcaster"]["displayName"]))
     return channels
 
 
@@ -49,20 +62,6 @@ def scrape_emotes():
     driver.quit()
 
     return emotes
-
-
-def format_top_channels(channels):
-    formatted_channels = []
-
-    for channel in channels:
-        if "title=" in str(channel):
-            text = str(channel)
-            start = text.index('title="') + 7
-            end = text.index('">')
-            substring = text[start:end]
-            formatted_channels.append(substring)
-
-    return formatted_channels
 
 
 def save_top_emotes(emotes) -> None:

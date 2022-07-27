@@ -125,7 +125,7 @@ def integrate_predictions(emote_data, prediction_data) -> dict:
     return dictionary
 
 
-def local_save(emote_data, prediction_data) -> dict:
+def local_save(emote_data, prediction_data, channel) -> dict:
     """Saving the data locally in a JSON file"""
 
     path_dict = "../JSON-Files/emote-dict.json"
@@ -134,7 +134,7 @@ def local_save(emote_data, prediction_data) -> dict:
     new_dict = evaluate_dict_emotions(new_dict)
     write_json(new_dict, path_dict)
 
-    print("------ DATA SAVED ------")
+    print(f"---- Data saved for {channel} ----")
     print("")
 
     emote_data = read_json(path_dict)
@@ -154,11 +154,11 @@ def database_save(emote_data, prediction_data) -> dict:
     return emote_data
 
 
-def save_data(emote_data, prediction_data, method) -> dict:
+def save_data(emote_data, prediction_data, method, channel) -> dict:
     """Integrates the collected data in the emote_data and saves it to the json file"""
 
     if method == "local":
-        return local_save(emote_data, prediction_data)
+        return local_save(emote_data, prediction_data, channel)
     elif method == "database":
         return database_save(emote_data, prediction_data)
 

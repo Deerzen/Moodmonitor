@@ -20,7 +20,8 @@ def run_pool(method, selection):
     """Runs a number of processes which each connect to a different channel"""
 
     print("Looking up current top channels...")
-    channels = scraper.format_top_channels(scraper.find_top_channels())[:selection]
+    channels = scraper.find_top_channels()[:selection]
+    print(channels)
 
     pool = Pool(processes=selection)
     pool.starmap_async(classifier.attempt_connection, zip(channels, repeat(method)))

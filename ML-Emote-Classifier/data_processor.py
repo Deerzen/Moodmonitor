@@ -36,8 +36,7 @@ def write_json(data, path) -> None:
 
 
 def load_json_dict():
-    emote_data = read_json("../JSON-Files/emote-dict.json")
-    return emote_data
+    return read_json("../JSON-Files/emote-dict.json")
 
 
 def upload(dataset):
@@ -74,8 +73,8 @@ def identify_emotion(emote) -> list:
     ]
 
     index = 0
+    combinations = {0: 0.66, 1: 0.33, 2: 0, 3: -0.33, 4: -0.66, 5: -2000}
     for value in evaluation:
-        combinations = {0: 0.66, 1: 0.33, 2: 0, 3: -0.33, 4: -0.66, 5: -2000}
         for key, threshold in combinations.items():
             if value >= threshold:
                 emotions.append(emotion_table[index][key])

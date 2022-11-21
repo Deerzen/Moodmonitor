@@ -54,22 +54,18 @@ def archive_prediction(emote, prediction, prediction_data) -> list:
 
     collected_data: list = prediction_data
     result: dict = {
-        "emote": "",
         "times tested": [0, 0, 0, 0],
         "introspection": 0,
         "temper": 0,
         "sensitivity": 0,
         "attitude": 0,
+        "emote": emote,
     }
-    result["emote"] = emote
 
-    index = 0
-    for dimension in DIMENSIONS:
+    for index, dimension in enumerate(DIMENSIONS):
         result[dimension] = round(prediction[index], 2)
         if prediction[index] != 0:
             result["times tested"][index] += 1
-        index += 1
-
     collected_data.append(result)
     return collected_data
 
@@ -129,9 +125,8 @@ def attempt_connection(channel, method) -> None:
         is_connected = True
         print(f"Successfully connected to {channel}")
         bot_loop(server, is_connected, method, channel)
-    # Error message if unsuccessful.
     except ConnectionAbortedError as error:
-        error_message = f"Connection to {channel} failed: " + str(error)
+        error_message = f"Connection to {channel} failed: {str(error)}"
         print(error_message)
         traceback.print_exc()
 
@@ -195,9 +190,7 @@ def bot_loop(server, is_connected, method, channel) -> None:
             message = chat_msg.sub("", response)
             msg = message.split("\r\n")[0]
             msg = str(msg)
-            emote_array = emote_finder(msg, scraped_emotes, emote_data)
-
-            if emote_array:
+            if emote_array := emote_finder(msg, scraped_emotes, emote_data):
                 emote_result = handle_emote_msg(
                     last_evaluations, emote_array, emote_data, prediction_data, channel
                 )

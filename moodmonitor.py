@@ -97,7 +97,7 @@ hide_st_style = """
             """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
-logo = st.image("https://raw.githubusercontent.com/Deerzen/Moodmonitor/main/logo.png")
+# logo = st.image("https://raw.githubusercontent.com/Deerzen/Moodmonitor/main/logo.png")
 
 config_path = "JSON-Files/config.json"
 if not os.path.exists(config_path):
@@ -217,13 +217,11 @@ def calculate_line_chart() -> pd.core.frame.DataFrame:
         "variance": sentiment_data["afinn variance"],
         "score": sentiment_data["current avg"],
     }
-    chart_dataframe = pd.DataFrame(chart_data, index=sentiment_data["report number"])
-    return chart_dataframe
+    return pd.DataFrame(chart_data, index=sentiment_data["report number"])
 
 
 def calculate_bar_chart() -> pd.core.frame.DataFrame:
-    chart_dataframe = pd.DataFrame(data=emotion_data)
-    return chart_dataframe
+    return pd.DataFrame(data=emotion_data)
 
 
 # This function simply updates the display for the most recent report
@@ -279,14 +277,11 @@ def attempt_connection() -> None:
         st.session_state["server"].connect(("irc.chat.twitch.tv", 6667))
         st.session_state["server"].send(bytes("PASS " + config[0] + "\r\n", "utf-8"))
         st.session_state["server"].send(bytes("NICK " + config[1] + "\r\n", "utf-8"))
-        st.session_state["server"].send(
-            bytes("JOIN " + f"#{channel}" + "\r\n", "utf-8")
-        )
+        st.session_state["server"].send(bytes(f"JOIN #{channel}" + "\r\n", "utf-8"))
         st.session_state["is_connected"] = True
         bot_loop()
-    # Error message if unsuccessful.
     except Exception as e:
-        error_message = status.error(f"Connection to {channel} failed: " + str(e))
+        error_message = status.error(f"Connection to {channel} failed: {str(e)}")
 
 
 # Bot loop which receives all messages, decodes them and passes them to
@@ -315,7 +310,7 @@ def bot_loop() -> None:
             if connection_msg in msg:
                 status.success(f"Connection to {channel} appears to be successful")
 
-            if not any(ele in message for ele in ignore):
+            if all(ele not in message for ele in ignore):
                 sentiment_analysis(msg)
                 emote_analysis(msg)
                 messages_since_report += 1
@@ -336,6 +331,9 @@ def bot_loop() -> None:
                 st.table(chat_data)
 
 
-if __name__ == "__main__":
-    if os.path.exists(config_path) and st.session_state["components_initialized"]:
-        take_inputs()
+if (
+    __name__ == "__main__"
+    and os.path.exists(config_path)
+    and st.session_state["components_initialized"]
+):
+    take_inputs()

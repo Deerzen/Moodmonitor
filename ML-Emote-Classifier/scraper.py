@@ -43,11 +43,11 @@ def find_top_channels():
 
     response = requests.request("POST", url, data=payload, headers=headers)
 
-    channels = []
     dictionaries = response.json()[0]["data"]["streams"]["edges"]
-    for dictionary in dictionaries:
-        channels.append(str(dictionary["node"]["broadcaster"]["displayName"]))
-    return channels
+    return [
+        str(dictionary["node"]["broadcaster"]["displayName"])
+        for dictionary in dictionaries
+    ]
 
 
 def scrape_emotes():
@@ -69,9 +69,7 @@ def save_top_emotes(emotes) -> None:
     and writes them to a json file"""
 
     formatted_emotes = []
-    index = 0
-    for emote in emotes:
-        index += 1
+    for index, emote in enumerate(emotes, start=1):
         text = str(emote)
         start = text.index('">') + 2
         end = text.index("</")
@@ -86,17 +84,15 @@ def save_top_emotes(emotes) -> None:
     if formatted_emotes:
         data_processor.write_json(formatted_emotes, SCRAPE_PATH)
         print("Scraping has been successful")
-    elif not formatted_emotes:
+    else:
         print("Scraping has been unsuccessful")
 
 
 def initialize_emote_dictionary() -> None:
     """Writes the scraped emotes in a dictionary in the defined format"""
 
-    emote_dictionary = {}
     emote_data = data_processor.read_json(SCRAPE_PATH)
-    for emote in emote_data:
-        emote_dictionary[emote] = dictionary_format
+    emote_dictionary = {emote: dictionary_format for emote in emote_data}
     data_processor.write_json(emote_dictionary, DICTIONARY_PATH)
 
 

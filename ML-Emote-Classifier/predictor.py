@@ -43,18 +43,14 @@ def create_dataset(last_evaluations, dimensions):
 
     # Essentially adds the index numbers of the last evaluations to an array
     # and the values to the respective key in the formated_evaluations dictionary.
-    evaluation_numbers = []
-    for i in range(len(last_evaluations)):
-        evaluation_numbers.append(i)
+    evaluation_numbers = list(range(len(last_evaluations)))
     for evaluation in last_evaluations:
         formated_evaluations["in"].append(evaluation[0])
         formated_evaluations["te"].append(evaluation[1])
         formated_evaluations["se"].append(evaluation[2])
         formated_evaluations["at"].append(evaluation[3])
 
-    # The formatted data can now be transformed in a pandas dataframe for the
-    # linear regression.
-    df = pd.DataFrame(
+    return pd.DataFrame(
         {
             "numbers": evaluation_numbers,
             dimensions[0]: formated_evaluations["in"],
@@ -63,7 +59,6 @@ def create_dataset(last_evaluations, dimensions):
             dimensions[3]: formated_evaluations["at"],
         }
     )
-    return df
 
 
 def classify_emotes(last_evaluations, needed_evaluations, dimensions) -> list:
@@ -78,12 +73,9 @@ def classify_emotes(last_evaluations, needed_evaluations, dimensions) -> list:
     # The outcomes are saved in the prediction variable.
     prediction = [0, 0, 0, 0]
     if len(last_evaluations) >= needed_evaluations:
-        current_dimension = 0
         x = df[["numbers"]]
-        for dimension in dimensions:
+        for current_dimension, dimension in enumerate(dimensions):
             y = df[dimension]
             dimension_prediction = linear_regression(x, y, len(last_evaluations))
             prediction[current_dimension] = dimension_prediction
-            current_dimension += 1
-
     return prediction
